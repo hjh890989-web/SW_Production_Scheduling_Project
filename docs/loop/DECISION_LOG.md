@@ -62,3 +62,16 @@ Next.js webpack의 `enhanced-resolve`는 일반 파일에 `readlinkSync`를 호�
 ## 종료 기록
 
 (루프 종료 시 STOP REASON 추가됨 — 현재 진행 중)
+
+
+---
+
+## 종료 기록
+
+**STOP REASON: ALL_TASKS_DONE**
+
+- 종료 일자: 2026-06-01
+- 종료 사유: T0.1~T0.8 (8 task) draft PR 모두 생성 완료 + 5종 검증 모두 exit 0 통과
+- PR 목록: #1 (T0.1), #2 (T0.2), #3 (T0.3), #4 (T0.4), #5 (T0.5), #6 (T0.6), #7 (T0.7), #8 (T0.8)
+- 작업 위치: C:\Users\sw174\evs-scheduling (NTFS, exFAT 마이그레이션 완료)
+- 다음 단계: 사용자 PR 리뷰 후 squash merge 결정 → Sprint 1 진입
