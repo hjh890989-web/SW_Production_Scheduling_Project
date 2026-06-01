@@ -30,6 +30,7 @@ model Item {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   aliases        ItemAlias[]
+  orders         Order[]
 
   @@index([extrusionGroup])
 }
@@ -74,6 +75,54 @@ model CalendarDay {
   note      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// ── 수주 통합 (Sprint 3) ──
+// CORE-1: enum류(orderType/sourceType/confidence/status)는 String + 앱 레벨(TS union) 검증.
+
+model Order {
+  id            String   @id @default(cuid())
+  itemId        String
+  rawProductCode String // 원본 엑셀 품번(정규화 전)
+  deliveryDate  DateTime
+  quantity      Int
+  orderType     String // OEM / KD
+  sourceType    String // weekly_plan / kd / monthly_forecast
+  confidence    String // CONFIRMED / FORECAST / MIXED
+  status        String   @default("ACTIVE") // ACTIVE / SUPERSEDED / CHANGED / CANCELLED
+  uploadBatchId String?
+  reason        String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  item          Item     @relation(fields: [itemId], references: [id])
+
+  @@index([itemId, deliveryDate])
+  @@index([sourceType, status])
+  @@index([uploadBatchId])
+}
+
+model ExcelMappingRule {
+  id            String   @id @default(cuid())
+  sourceType    String   @unique // weekly_plan / kd / monthly_forecast
+  sheetName     String?
+  headerRow     Int
+  dataStartRow  Int
+  columnMapping Json // { productCode: 8, material: 0, ... }
+  updatedAt     DateTime @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  type      String // UNMATCHED_ITEM / ORDER_CHANGED / ...
+  message   String
+  payload   Json?
+  targetUserId String?
+  read      Boolean  @default(false)
+  cancelled Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([targetUserId, read])
+  @@index([type, createdAt])
 }
 
 model User {
