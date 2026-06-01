@@ -1,0 +1,39 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Node / Next
+node_modules
+.next
+out
+coverage
+.swc
+
+# Env
+.env*
+!.env.example
+
+# IDE
+.vscode
+.idea
+
+# Project docs (build context 제외)
+Stage_A
+Stage_B
+Stage_C
+Stage_D
+Prompt
+"Raw Materials"
+.archive
+.agents
+.claude
+docs
+reports
+
+# Lockfile dev backup
+package-lock.json.bak
