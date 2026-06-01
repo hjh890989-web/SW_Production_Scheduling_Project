@@ -1,67 +1,67 @@
 # Sprint 0 Decision Log
 
-본 파일은 `/goal` 자동화 루프(Sprint 0, T0.1~T0.8)에서 발생하는 모든 추가 의사결정을 기록합니다.
+�??�일?� `/goal` ?�동??루프(Sprint 0, T0.1~T0.8)?�서 발생?�는 모든 추�? ?�사결정??기록?�니??
 
-- **CORE**: 스택 변경, 외부 패키지 추가, 아키텍처
-- **MINOR**: 폴더 구조, 네이밍, tsconfig 옵션, shadcn 컴포넌트 선택
+- **CORE**: ?�택 변�? ?��? ?�키지 추�?, ?�키?�처
+- **MINOR**: ?�더 구조, ?�이�? tsconfig ?�션, shadcn 컴포?�트 ?�택
 
-카운터 줄은 grep 가능 형태로 유지됩니다.
+카운??줄�? grep 가???�태�??��??�니??
 
-CORE: 2
+CORE: 3
 MINOR: 0
 
 ---
 
 ## 결정 목록
 
-### CORE-1 (T0.1) — Next.js 수동 스캐폴딩 채택 [유효]
+### CORE-1 (T0.1) ??Next.js ?�동 ?�캐?�딩 채택 [?�효]
 
-- **결정**: `npx create-next-app@latest .` 사용 불가 → 수동 스캐폴딩으로 동등 구성
-- **사유**: 프로젝트 루트 폴더명에 대문자 포함 → npm 패키지명 규칙 위배. create-next-app은 `--name` 옵션 미지원
-- **대안 적용**: `package.json` name=`evs-scheduling` + 표준 Next.js 14+ 구성 수동 작성
-- **영향**: create-next-app과 동일한 기능적 결과
+- **결정**: `npx create-next-app@latest .` ?�용 불�? ???�동 ?�캐?�딩?�로 ?�등 구성
+- **?�유**: ?�로?�트 루트 ?�더명에 ?�문자 ?�함 ??npm ?�키지�?규칙 ?�배. create-next-app?� `--name` ?�션 미�???
+- **?�???�용**: `package.json` name=`evs-scheduling` + ?��? Next.js 14+ 구성 ?�동 ?�성
+- **?�향**: create-next-app�??�일??기능??결과
 
-### ~~CORE-2~~ Windows + 공백 경로 EISDIR 가설 — **INVALIDATED**
+### ~~CORE-2~~ Windows + 공백 경로 EISDIR 가????**INVALIDATED**
 
-- git worktree로 무공백 경로(`E:\evs-build`)에서 빌드 시도 → 동일 EISDIR 발생
-- 결론: 공백 경로는 원인이 아님
+- git worktree�?무공�?경로(`E:\evs-build`)?�서 빌드 ?�도 ???�일 EISDIR 발생
+- 결론: 공백 경로???�인???�님
 
-### ~~CORE-3~~ Node.js v24 readlink 버그 가설 — **INVALIDATED**
+### ~~CORE-3~~ Node.js v24 readlink 버그 가????**INVALIDATED**
 
-- Node v20.18.0 설치 후 동일 위치(E: 드라이브)에서 동일 EISDIR 발생
-- 결론: Node 버전은 원인이 아님
+- Node v20.18.0 ?�치 ???�일 ?�치(E: ?�라?�브)?�서 ?�일 EISDIR 발생
+- 결론: Node 버전?� ?�인???�님
 
-### CORE-4 (T0.1) — **실제 근본 원인 확정: exFAT 파일시스템 + NTFS 마이그레이션 결정**
+### CORE-4 (T0.1) ??**?�제 근본 ?�인 ?�정: exFAT ?�일?�스??+ NTFS 마이그레?�션 결정**
 
 **진단 종합**:
-| 환경 | 결과 |
+| ?�경 | 결과 |
 |---|---|
-| E:\VS code Workbase\... (공백) + Node v24 | ❌ EISDIR |
-| E:\evs-build (무공백, worktree) + Node v24 | ❌ EISDIR |
-| E:\evs-build + Node v20 | ❌ EISDIR |
-| C:\Users\sw174\evs-test + Node v20 | ✅ **빌드 성공** |
+| E:\VS code Workbase\... (공백) + Node v24 | ??EISDIR |
+| E:\evs-build (무공�? worktree) + Node v24 | ??EISDIR |
+| E:\evs-build + Node v20 | ??EISDIR |
+| C:\Users\sw174\evs-test + Node v20 | ??**빌드 ?�공** |
 
-**근본 원인**:
-`fsutil fsinfo volumeinfo E:` 결과 — E: 드라이브는 **Samsung T7 Touch 외장 SSD에 exFAT 파일시스템**.
+**근본 ?�인**:
+`fsutil fsinfo volumeinfo E:` 결과 ??E: ?�라?�브??**Samsung T7 Touch ?�장 SSD??exFAT ?�일?�스??*.
 
-exFAT는 다음을 미지원:
-- 심볼릭 링크 / junction / reparse point
-- POSIX 파일 메타데이터 (`ctime: 2009-04-22` 비정상값이 단서)
+exFAT???�음??미�???
+- ?�볼�?링크 / junction / reparse point
+- POSIX ?�일 메�??�이??(`ctime: 2009-04-22` 비정?�값???�서)
 
-Next.js webpack의 `enhanced-resolve`는 일반 파일에 `readlinkSync`를 호출하는데, exFAT에서 Windows API가 EISDIR 반환 → 빌드 차단.
+Next.js webpack??`enhanced-resolve`???�반 ?�일??`readlinkSync`�??�출?�는?? exFAT?�서 Windows API가 EISDIR 반환 ??빌드 차단.
 
-**해소 결정**: 정식 작업 위치를 **`C:\Users\sw174\evs-scheduling`** (NTFS)로 마이그레이션.
-- git clone으로 새 위치 확보 (모든 git history·branch 동기화)
-- E:\VS code Workbase\... 원본은 git remote 동일하므로 백업·참조용으로 보존 가능
-- E:\evs-build worktree는 더 이상 빌드 불가 — 사용자 정리 결정
+**?�소 결정**: ?�식 ?�업 ?�치�?**`C:\Users\sw174\evs-scheduling`** (NTFS)�?마이그레?�션.
+- git clone?�로 ???�치 ?�보 (모든 git history·branch ?�기??
+- E:\VS code Workbase\... ?�본?� git remote ?�일?��?�?백업·참조?�으�?보존 가??
+- E:\evs-build worktree?????�상 빌드 불�? ???�용???�리 결정
 
-**분류 사유**: 작업 파일시스템 변경 → CORE (인프라)
+**분류 ?�유**: ?�업 ?�일?�스??변�???CORE (?�프??
 
 ---
 
 ## 종료 기록
 
-(루프 종료 시 STOP REASON 추가됨 — 현재 진행 중)
+(루프 종료 ??STOP REASON 추�??????�재 진행 �?
 
 
 ---
@@ -70,8 +70,16 @@ Next.js webpack의 `enhanced-resolve`는 일반 파일에 `readlinkSync`를 호�
 
 **STOP REASON: ALL_TASKS_DONE**
 
-- 종료 일자: 2026-06-01
-- 종료 사유: T0.1~T0.8 (8 task) draft PR 모두 생성 완료 + 5종 검증 모두 exit 0 통과
+- 종료 ?�자: 2026-06-01
+- 종료 ?�유: T0.1~T0.8 (8 task) draft PR 모두 ?�성 ?�료 + 5�?검�?모두 exit 0 ?�과
 - PR 목록: #1 (T0.1), #2 (T0.2), #3 (T0.3), #4 (T0.4), #5 (T0.5), #6 (T0.6), #7 (T0.7), #8 (T0.8)
-- 작업 위치: C:\Users\sw174\evs-scheduling (NTFS, exFAT 마이그레이션 완료)
-- 다음 단계: 사용자 PR 리뷰 후 squash merge 결정 → Sprint 1 진입
+- ?�업 ?�치: C:\Users\sw174\evs-scheduling (NTFS, exFAT 마이그레?�션 ?�료)
+- ?�음 ?�계: ?�용??PR 리뷰 ??squash merge 결정 ??Sprint 1 진입
+
+### CORE-5 (T0.8) ??간트 ?�이브러�? frappe-gantt 채택 (TBD-1 종결)
+
+- 결정: frappe-gantt (MIT, vanilla JS + SVG, 30KB)
+- ?�유: D8 ?�내�??�책 ?�전(?�체?�스??, 비용 0?? 47?�번 규모??충분, 박철??반장 친화 UX 커스?�마?�징 ?�유??최�?
+- ?�???�백: T5.6 PoC?�서 ?�계 발견 ??DHTMLX Gantt GPLv2�??�환
+- Bryntum ?�외: ?�이?�스 ?�버 ?�출 검�?미완�?- ?�세: reports/T0.8_gantt-poc.md
+- TBD-1 종결
