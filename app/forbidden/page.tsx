@@ -1,32 +1,22 @@
 import Link from 'next/link';
-import { headers } from 'next/headers';
 import { auth } from '@/auth';
-import { prisma } from '@/lib/db';
+import { logAudit } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
 /**
  * 403 Forbidden 페이지 (T1.3 — AC MR-1-F1).
- * 권한 미충족 접근 시도를 AuditLog `UNAUTHORIZED_ACCESS`로 기록한다.
- * inline audit 기록은 T1.6에서 lib/audit.ts logAudit()로 일반화한다.
+ * 권한 미충족 접근 시도를 AuditLog `UNAUTHORIZED_ACCESS`로 기록한다 (T1.6 logAudit).
  */
 async function recordUnauthorized(from: string | null): Promise<void> {
-  try {
-    const session = await auth();
-    const h = headers();
-    await prisma.auditLog.create({
-      data: {
-        userId: session?.user?.id ?? null,
-        action: 'UNAUTHORIZED_ACCESS',
-        targetTable: 'Page',
-        targetKey: from,
-        ipAddress: h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? h.get('x-real-ip') ?? null,
-        userAgent: h.get('user-agent') ?? null,
-      },
-    });
-  } catch (err) {
-    console.error('[audit] UNAUTHORIZED_ACCESS 기록 실패:', err);
-  }
+  const session = await auth();
+  await logAudit({
+    userId: session?.user?.id ?? null,
+    userRole: session?.user?.role ?? null,
+    action: 'UNAUTHORIZED_ACCESS',
+    table: 'Page',
+    key: from,
+  });
 }
 
 export default async function ForbiddenPage({

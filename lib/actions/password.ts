@@ -1,19 +1,14 @@
 'use server';
 
-import { headers } from 'next/headers';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/db';
 import { hashPassword, verifyPassword } from '@/lib/auth/password';
 import { validatePasswordPolicy, PASSWORD_POLICY_MESSAGE } from '@/lib/auth/password-policy';
+import { logAudit } from '@/lib/audit';
 
 export interface ActionResult {
   ok: boolean;
   message: string;
-}
-
-function clientIp(): string | null {
-  const h = headers();
-  return h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? h.get('x-real-ip') ?? null;
 }
 
 /**
@@ -50,19 +45,13 @@ export async function changePassword(
     data: { passwordHash, passwordChangedAt: new Date() },
   });
 
-  try {
-    await prisma.auditLog.create({
-      data: {
-        userId: user.id,
-        action: 'PASSWORD_CHANGED',
-        targetTable: 'User',
-        targetKey: user.id,
-        ipAddress: clientIp(),
-      },
-    });
-  } catch (err) {
-    console.error('[audit] PASSWORD_CHANGED 기록 실패:', err);
-  }
+  await logAudit({
+    userId: user.id,
+    userRole: session.user.role,
+    action: 'PASSWORD_CHANGED',
+    table: 'User',
+    key: user.id,
+  });
 
   return { ok: true, message: '비밀번호가 변경되었습니다.' };
 }

@@ -28,6 +28,7 @@ model User {
 model AuditLog {
   id           String   @id @default(cuid())
   userId       String?
+  userRole     String?
   action       String
   targetTable  String?
   targetKey    String?

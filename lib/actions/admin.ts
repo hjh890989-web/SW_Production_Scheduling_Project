@@ -1,9 +1,9 @@
 'use server';
 
-import { headers } from 'next/headers';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/db';
 import { assertRole } from '@/lib/auth/assert';
+import { logAudit } from '@/lib/audit';
 import type { ActionResult } from '@/lib/actions/password';
 
 /**
@@ -23,20 +23,13 @@ export async function unlockAccount(userId: string): Promise<ActionResult> {
     data: { failedLogins: 0, lockedUntil: null },
   });
 
-  try {
-    const h = headers();
-    await prisma.auditLog.create({
-      data: {
-        userId: session?.user?.id ?? null,
-        action: 'ACCOUNT_UNLOCKED',
-        targetTable: 'User',
-        targetKey: userId,
-        ipAddress: h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null,
-      },
-    });
-  } catch (err) {
-    console.error('[audit] ACCOUNT_UNLOCKED 기록 실패:', err);
-  }
+  await logAudit({
+    userId: session?.user?.id ?? null,
+    userRole: session?.user?.role ?? null,
+    action: 'ACCOUNT_UNLOCKED',
+    table: 'User',
+    key: userId,
+  });
 
   return { ok: true, message: '계정 잠금을 해제했습니다.' };
 }

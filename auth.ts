@@ -4,27 +4,19 @@ import { authConfig, type Role } from '@/auth.config';
 import { prisma } from '@/lib/db';
 import { verifyPassword } from '@/lib/auth/password';
 import { isLocked, registerFailure } from '@/lib/auth/lockout';
+import { logAudit } from '@/lib/audit';
 
 export { ROLES } from '@/auth.config';
 export type { Role };
 
-/**
- * 로그인 이벤트 audit 최소 기록 (T1.1).
- * 전체 logAudit(IP/sessionId/fallback)는 T1.6에서 lib/audit.ts로 일반화한다.
- */
-async function writeLoginAudit(
+/** 로그인 이벤트 audit 기록 (T1.6 logAudit 일반화 사용). */
+function writeLoginAudit(
   userId: string | null,
   action: 'LOGIN' | 'LOGIN_FAILED',
   ipAddress: string | null,
+  userRole?: string | null,
 ): Promise<void> {
-  try {
-    await prisma.auditLog.create({
-      data: { userId, action, targetTable: 'User', targetKey: userId, ipAddress },
-    });
-  } catch (err) {
-    // audit 실패가 인증 흐름을 차단하지 않도록 fallback (T1.6에서 강화)
-    console.error('[audit] writeLoginAudit failed:', err);
-  }
+  return logAudit({ userId, userRole, action, table: 'User', key: userId, ipAddress });
 }
 
 function extractIp(request: Request | undefined): string | null {
@@ -83,7 +75,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           where: { id: user.id },
           data: { failedLogins: 0, lockedUntil: null, lastLoginAt: now },
         });
-        await writeLoginAudit(user.id, 'LOGIN', ip);
+        await writeLoginAudit(user.id, 'LOGIN', ip, user.role);
 
         return {
           id: user.id,
