@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import { hashPassword } from '../lib/auth/password';
 import { SEED_USERS, assertSeedPolicy } from './seed-data';
 import { seedItems } from './seed-items';
+import { seedEquipment } from './seed-equipment';
 
 /**
  * 초기 사용자 시드 (T1.7). `npx prisma db seed`로 실행.
@@ -33,6 +34,9 @@ async function main(): Promise<void> {
 
     const itemCount = await seedItems(prisma);
     console.log(`✅ 시드 완료: ${itemCount} 품번 (실리콘)`);
+
+    const equipmentCount = await seedEquipment(prisma);
+    console.log(`✅ 시드 완료: ${equipmentCount} 장비`);
   } finally {
     await prisma.$disconnect();
   }

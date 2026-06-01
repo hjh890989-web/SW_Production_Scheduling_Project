@@ -45,6 +45,19 @@ model ItemAlias {
   @@index([itemId])
 }
 
+model Equipment {
+  id        String   @id @default(cuid())
+  code      String   @unique // LP_1, IC_1, FORD, NEW ...
+  name      String
+  type      String // MOLDING_LP / MOLDING_IC / EXTRUSION (CORE-1)
+  capacity  Json? // { slots: [...] } 또는 { lines: [...] }
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([type])
+}
+
 model User {
   id            String   @id @default(cuid())
   // 로그인 식별자는 사번/아이디(username) — 사내 공장 사용자 UX (CORE-4). email은 보조 연락처.
