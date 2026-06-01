@@ -12,9 +12,11 @@ model User {
   email         String   @unique
   passwordHash  String
   name          String?
-  role          String   @default("MoldingForeman")
+  // 6 Role: ADMIN / PRODUCTION_MANAGER / MOLDING_LEADER / EXTRUSION_LEADER / SALES_PURCHASE / EXECUTIVE (CORE-1)
+  role          String   @default("MOLDING_LEADER")
   failedLogins  Int      @default(0)
   lockedUntil   DateTime?
+  lastLoginAt   DateTime?
   sessionVersion Int     @default(0)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

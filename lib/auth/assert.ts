@@ -1,4 +1,4 @@
-import type { Role } from '@/auth';
+import type { Role } from '@/auth.config';
 
 export class ForbiddenError extends Error {
   constructor(message = 'Forbidden') {
