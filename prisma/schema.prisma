@@ -58,6 +58,15 @@ model Equipment {
   @@index([type])
 }
 
+model OperationParam {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String // 모든 value는 String, 사용 시 parseFloat (AC T2.3-F1)
+  category  String?
+  label     String?
+  updatedAt DateTime @updatedAt
+}
+
 model User {
   id            String   @id @default(cuid())
   // 로그인 식별자는 사번/아이디(username) — 사내 공장 사용자 UX (CORE-4). email은 보조 연락처.
