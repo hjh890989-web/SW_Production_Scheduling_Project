@@ -9,12 +9,17 @@ datasource db {
 
 model User {
   id            String   @id @default(cuid())
-  email         String   @unique
+  // 로그인 식별자는 사번/아이디(username) — 사내 공장 사용자 UX (CORE-4). email은 보조 연락처.
+  username      String   @unique
+  email         String?  @unique
   passwordHash  String
   name          String?
-  role          String   @default("MoldingForeman")
+  // 6 Role: ADMIN / PRODUCTION_MANAGER / MOLDING_LEADER / EXTRUSION_LEADER / SALES_PURCHASE / EXECUTIVE (CORE-1)
+  role          String   @default("MOLDING_LEADER")
   failedLogins  Int      @default(0)
   lockedUntil   DateTime?
+  lastLoginAt   DateTime?
+  passwordChangedAt DateTime?
   sessionVersion Int     @default(0)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -23,6 +28,7 @@ model User {
 model AuditLog {
   id           String   @id @default(cuid())
   userId       String?
+  userRole     String?
   action       String
   targetTable  String?
   targetKey    String?
