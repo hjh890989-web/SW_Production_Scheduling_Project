@@ -41,17 +41,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     Credentials({
       name: 'credentials',
       credentials: {
-        email: { label: 'Email', type: 'email' },
-        password: { label: 'Password', type: 'password' },
+        username: { label: '아이디', type: 'text' },
+        password: { label: '비밀번호', type: 'password' },
       },
       async authorize(credentials, request) {
-        const email = typeof credentials?.email === 'string' ? credentials.email.trim() : '';
+        const username = typeof credentials?.username === 'string' ? credentials.username.trim() : '';
         const password = typeof credentials?.password === 'string' ? credentials.password : '';
         const ip = extractIp(request);
 
-        if (!email || !password) return null;
+        if (!username || !password) return null;
 
-        const user = await prisma.user.findUnique({ where: { email } });
+        const user = await prisma.user.findUnique({ where: { username } });
         if (!user) {
           await writeLoginAudit(null, 'LOGIN_FAILED', ip);
           return null;

@@ -4,7 +4,7 @@
 분류: **CORE**(아키텍처·보안·외부의존) / **MINOR**(네이밍·디렉터리·UI 디테일·로그 포맷).
 
 <!-- grep 가능한 카운터 (각 결정 추가 시 갱신) -->
-CORE: 3
+CORE: 4
 MINOR: 2
 
 ---
@@ -28,6 +28,12 @@ MINOR: 2
 - **배경**: 이슈는 `bcrypt` 12 rounds를 명시. 네이티브 bcrypt는 node-gyp/빌드 툴체인 의존.
 - **근거**: 사내 단일 Ubuntu 서버·Docker 멀티스테이지 빌드에서 네이티브 컴파일 의존성을 제거하면 이식성·재현성↑. bcryptjs는 동일 bcrypt 알고리즘·동일 round 비용, API 호환. 성능(≤100ms@12rounds) 충족.
 - **영향 범위**: `package.json` deps, `lib/auth/password.ts`, `prisma/seed.ts`.
+
+### CORE-4 — 로그인 식별자는 `username`(사번/아이디), email 아님
+- **결정**: User에 `username String @unique` 추가, 로그인은 username 기준. `email`은 `String?`(보조 연락처)로 완화.
+- **배경**: T1.4는 "아이디(id) ≥ 3자" 입력을 명시하고 T1.7 시드는 `admin`/`kimms`/`parkcs` 등 username 형태 ID를 사용. 기존 T1.1은 email 기준 조회였음.
+- **근거**: 사내 공장 사용자(반장 등 IT 저숙련)는 email보다 사번/아이디 로그인이 자연스럽고 시드 데이터와 일치. Credentials authorize를 username 조회로 변경.
+- **영향 범위**: `prisma/schema.prisma`(username 필드), `auth.ts`(authorize·credentials), `lib/auth/login-schema.ts`, `prisma/seed.ts`(T1.7).
 
 ---
 
