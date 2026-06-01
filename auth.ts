@@ -3,6 +3,7 @@ import Credentials from 'next-auth/providers/credentials';
 import { authConfig, type Role } from '@/auth.config';
 import { prisma } from '@/lib/db';
 import { verifyPassword } from '@/lib/auth/password';
+import { isLocked, registerFailure } from '@/lib/auth/lockout';
 
 export { ROLES } from '@/auth.config';
 export type { Role };
@@ -57,21 +58,30 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
+        const now = new Date();
+
+        // 계정 잠금 상태면 비밀번호 확인 없이 차단 (T1.5)
+        if (isLocked(user.lockedUntil, now)) {
+          await writeLoginAudit(user.id, 'LOGIN_FAILED', ip);
+          return null;
+        }
+
         const valid = await verifyPassword(password, user.passwordHash);
         if (!valid) {
-          // 실패 카운터 +1 (5회 잠금 enforcement는 T1.5에서 강화)
+          // 실패 카운터 +1, 5회 도달 시 5분 잠금 (T1.5)
+          const { failedLogins, lockedUntil } = registerFailure(user.failedLogins, now);
           await prisma.user.update({
             where: { id: user.id },
-            data: { failedLogins: { increment: 1 } },
+            data: { failedLogins, lockedUntil },
           });
           await writeLoginAudit(user.id, 'LOGIN_FAILED', ip);
           return null;
         }
 
-        // 성공: 실패 카운터 리셋 + lastLoginAt 갱신
+        // 성공: 실패 카운터·잠금 리셋 + lastLoginAt 갱신 (AC T1.5-2 자동 해제)
         await prisma.user.update({
           where: { id: user.id },
-          data: { failedLogins: 0, lockedUntil: null, lastLoginAt: new Date() },
+          data: { failedLogins: 0, lockedUntil: null, lastLoginAt: now },
         });
         await writeLoginAudit(user.id, 'LOGIN', ip);
 
