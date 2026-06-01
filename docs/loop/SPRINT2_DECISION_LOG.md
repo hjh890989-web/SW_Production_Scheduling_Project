@@ -43,3 +43,7 @@ MINOR: 1
 - ETL 유틸 `lib/etl/`, 마스터 도메인 `lib/master/`, 시드 분리 `prisma/seed-*.ts`, 마스터 화면 `app/(dashboard)/master/{items,equipment,parameters,calendar}/`.
 
 ---
+
+---
+
+STOP REASON: ALL_PRS_DONE (T2.1~T2.9 9개 draft PR 모두 생성 — PR #18~#26)
