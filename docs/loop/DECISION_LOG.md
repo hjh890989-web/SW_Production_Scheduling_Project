@@ -7,7 +7,7 @@
 
 카운터 줄은 grep 가능 형태로 유지됩니다.
 
-CORE: 2
+CORE: 3
 MINOR: 0
 
 ---
@@ -41,11 +41,30 @@ MINOR: 0
 
 ---
 
+### CORE-3 (T0.1) — 실제 근본 원인: Node.js v24 Windows readlink 버그 (블로커 확정)
+
+- **현상 재현**: `node -e "require('fs').readlinkSync('app/page.tsx')"` → 일반 `.tsx` 파일에 `Error: EISDIR ... readlink 'E:\evs-build\app\page.tsx'` 발생
+- **근본 원인**: Node.js v24.15.0의 Windows 구현에서 일반 파일에 `readlinkSync` 호출 시 EISDIR 반환 (Node v20 LTS는 EINVAL 반환이 정상). webpack의 `enhanced-resolve`가 이를 정상 처리하지 못함
+- **CORE-2 가설 무효화**: 공백 경로(`E:\VS code Workbase\...`)가 원인이라 판단했으나, `git worktree`로 무공백 경로(`E:\evs-build`)에서도 동일 에러 발생. **공백은 무관**
+- **시도한 회피책 (총 6회 실패)**:
+  1~4. (CORE-2 참조)
+  5. `git worktree add /e/evs-build` → 무공백 경로 빌드 시도 → 동일 EISDIR
+  6. `node -e readlinkSync` 직접 호출로 Node 자체 문제 입증
+- **확정 해소 경로**: Node.js v20 LTS 설치 (프로젝트 `.nvmrc=20`이 명시한 권장 버전)
+  - nvm-windows 또는 https://nodejs.org/download/release/v20.18.0/ 직접 설치
+  - 현재 시스템에는 `C:\Program Files\nodejs\node.exe` (v24)만 존재. nvm 미설치 확인됨
+- **분류 사유**: 런타임 환경 변경 필요 → CORE (블로커, 사용자 액션 필요)
+
+---
+
 ## 종료 기록
 
 (루프 종료 시 STOP REASON 추가됨)
 
 STOP REASON: VERIFICATION_STUCK
+- 종료 사유: Node.js v24 Windows readlink 버그로 `npm run build` 6회 연속 실패
+- 해소 조건: Node v20 LTS 설치 후 동일 `/goal` 재실행
+- 목표 달성도: 5/5 검증 중 3/5 통과 (test/lint/typecheck) · 0/8 draft PR 생성 → **목표 미달성**
 
 ---
 
