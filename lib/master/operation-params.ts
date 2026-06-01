@@ -27,3 +27,32 @@ export const PARAM_DEFS: ParamDef[] = [
   { key: 'd2_rule_days', label: 'D-2 룰(일)', category: 'rule', defaultValue: 2, min: 0, max: 10 },
   { key: 'd1_rule_days', label: 'D-1 룰(일)', category: 'rule', defaultValue: 1, min: 0, max: 10 },
 ];
+
+export const PARAM_BY_KEY: Record<string, ParamDef> = Object.fromEntries(
+  PARAM_DEFS.map((p) => [p.key, p]),
+);
+
+export interface ParamValidation {
+  ok: boolean;
+  value?: number;
+  error?: string;
+  /** max 초과 — 사용자 확인 후 적용 가능 (AC T2.7-F1). */
+  needsConfirm?: boolean;
+}
+
+/**
+ * 파라미터 값 검증 (T2.7). min 미만은 거부(AC T2.7-2), max 초과는 확인 요청(AC T2.7-F1).
+ */
+export function validateParamValue(def: ParamDef, raw: string): ParamValidation {
+  const value = Number(raw.trim());
+  if (raw.trim() === '' || Number.isNaN(value)) {
+    return { ok: false, error: '숫자를 입력하세요.' };
+  }
+  if (value < def.min) {
+    return { ok: false, error: `${def.min} 이상이어야 합니다.` };
+  }
+  if (value > def.max) {
+    return { ok: false, needsConfirm: true, value, error: `${def.max} 초과 — 정말 적용할까요?` };
+  }
+  return { ok: true, value };
+}
