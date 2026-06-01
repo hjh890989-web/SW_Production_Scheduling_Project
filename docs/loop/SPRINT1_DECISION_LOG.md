@@ -52,3 +52,7 @@ MINOR: 3
 - **영향**: T1.8 PR에서 CI 자동 실행 미포함을 명시.
 
 ---
+
+---
+
+STOP REASON: ALL_PRS_DONE (T1.1~T1.8 8개 draft PR 모두 생성 — PR #9~#16)
