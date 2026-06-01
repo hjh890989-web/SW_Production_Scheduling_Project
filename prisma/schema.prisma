@@ -7,6 +7,75 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ── 마스터 데이터 (Sprint 2) ──
+// CORE-1: SQLite는 Prisma enum 미지원 → enum류는 String + 앱 레벨(TS union·Zod) 검증.
+
+model Item {
+  id             String   @id @default(cuid())
+  productCode    String   @unique // 생산 품번
+  customerCode   String? // 고객사 품번
+  hwasungCode    String? // ERP(화성) 코드
+  material       String   @default("silicone")
+  // 압출 제약
+  extrusionGroup Int? // E열 1-8
+  headPin        String? // 22*8 등
+  cutLength      Float? // 재단 길이(mm)
+  extrusionSpeed Float? // 압출 속도
+  extruderFord   Boolean  @default(false)
+  extruderNew    Boolean  @default(false)
+  // 성형 제약
+  lpMoldsPerAngle Int? // 저압 앵글당 몰드 수
+  icMoldsPerAngle Int? // IC 앵글당 몰드 수
+  lpPosTop        Boolean @default(false) // 상단 위치 가능 여부
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  aliases        ItemAlias[]
+
+  @@index([extrusionGroup])
+}
+
+model ItemAlias {
+  id         String @id @default(cuid())
+  itemId     String
+  alias      String @unique
+  normalized String // 정규화 키(normalizeProductCode 결과)
+  item       Item   @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([normalized])
+  @@index([itemId])
+}
+
+model Equipment {
+  id        String   @id @default(cuid())
+  code      String   @unique // LP_1, IC_1, FORD, NEW ...
+  name      String
+  type      String // MOLDING_LP / MOLDING_IC / EXTRUSION (CORE-1)
+  capacity  Json? // { slots: [...] } 또는 { lines: [...] }
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([type])
+}
+
+model OperationParam {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String // 모든 value는 String, 사용 시 parseFloat (AC T2.3-F1)
+  category  String?
+  label     String?
+  updatedAt DateTime @updatedAt
+}
+
+model CalendarDay {
+  date      DateTime @id // 일자 PK (UTC 자정)
+  type      String   @default("NORMAL") // NORMAL/HOLIDAY/PM/TEMP_OFF (CORE-1)
+  isWorkday Boolean  @default(true)
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model User {
   id            String   @id @default(cuid())
   // 로그인 식별자는 사번/아이디(username) — 사내 공장 사용자 UX (CORE-4). email은 보조 연락처.
