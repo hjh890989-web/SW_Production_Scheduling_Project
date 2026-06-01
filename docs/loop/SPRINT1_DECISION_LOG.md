@@ -5,7 +5,7 @@
 
 <!-- grep 가능한 카운터 (각 결정 추가 시 갱신) -->
 CORE: 4
-MINOR: 2
+MINOR: 3
 
 ---
 
@@ -45,5 +45,10 @@ MINOR: 2
 
 ### MINOR-2 — 디렉터리 컨벤션
 - **결정**: 인증 도메인 유틸은 `lib/auth/`(password.ts, password-policy.ts, lockout.ts), RBAC는 `lib/permissions.ts`, audit는 `lib/audit.ts`. 라우트 그룹은 `app/(auth)/`, `app/(dashboard)/`.
+
+### MINOR-3 — T1.8 CI 워크플로 파일 생성 보류 (goal 제약)
+- **결정**: T1.8 명세는 `.github/workflows/e2e.yml` CI 워크플로를 요구하나, 본 /goal Section 4가 `.github/workflows/`를 **수정 금지**로 지정하여 **생성하지 않음**. Playwright 설정(`playwright.config.ts`)·E2E 스펙(`tests/e2e/auth.spec.ts`)·`npm run test:e2e` 스크립트만 제공.
+- **근거**: goal 제약이 이슈 DoD보다 우선. CI 통합은 별도 PR(권한 보유자)에서 진행 권장.
+- **영향**: T1.8 PR에서 CI 자동 실행 미포함을 명시.
 
 ---
