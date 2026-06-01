@@ -98,7 +98,7 @@ gh pr create --draft --base main \
 
 ## Related
 - Task: [T<task-id>](Stage_D/issues/T<task-id>_<slug>.md)
-- WBS: [Stage_C/20_WBS_v1.0.md](Stage_C/20_WBS_v1.0.md)
+- WBS: [Stage_C/20_WBS_v1.1.md](Stage_C/20_WBS_v1.1.md)
 
 ## Test Plan
 - [ ] <test step 1>

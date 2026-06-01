@@ -70,7 +70,19 @@
       "Bash(*--no-verify*)",
       "Bash(*--no-gpg-sign*)",
       "Bash(curl:*credential*)",
-      "Bash(curl:*token*)"
+      "Bash(curl:*token*)",
+      "Bash(curl:*generative.googleapis.com*)",
+      "Bash(curl:*api.openai.com*)",
+      "Bash(curl:*api.anthropic.com*)",
+      "Bash(curl:*huggingface.co*)",
+      "Bash(curl:*api.cohere.ai*)",
+      "Bash(curl:*api.mistral.ai*)",
+      "Bash(*OPENAI_API_KEY*)",
+      "Bash(*ANTHROPIC_API_KEY*)",
+      "Bash(*GOOGLE_GENERATIVE_AI_API_KEY*)",
+      "Bash(*HUGGINGFACE_API_TOKEN*)",
+      "Bash(vercel deploy:*)",
+      "Bash(supabase:*)"
     ]
   },
   "env": {

@@ -33,7 +33,7 @@
 ### Stage 진행 단계 (V-모델)
 - ✅ Stage_A 개발계획서·문제정의서 (v1.0~v1.3) — [Stage_A/](Stage_A/)
 - ✅ Stage_B 페르소나·JTBD·VPS — [Stage_B/](Stage_B/)
-- ✅ Stage_C PRD v1.4 + WBS v1.0 (13 Sprint × 115 Task) — [Stage_C/](Stage_C/)
+- ✅ Stage_C PRD v1.4 + **WBS v1.1** (13 Sprint × **117 Task**, T0.8/T5.12 추가) + ADR D-22/D-25 — [Stage_C/](Stage_C/)
 - ✅ Stage_D 115개 GitHub Issue 명세서 (T0.1 ~ T12.7.4) — [Stage_D/issues/](Stage_D/issues/)
 - 🔜 **현재: Sprint 0 코드 착수 직전** (T0.1 Next.js 프로젝트 생성부터)
 
@@ -118,13 +118,24 @@
 작업 성격에 따라 적합한 서브에이전트 또는 슬래시 커맨드가 자동으로 위임됩니다.
 수동 호출이 필요하면 `> use the <agent-name> subagent` 또는 `/<command>` 형태로 지시하세요.
 
-### Subagents (`.claude/agents/`)
+### Subagents (`.claude/agents/`, 9종)
+
+**도메인 인식 (EVS 산출물 직접 참조)**:
 | 에이전트 | 사용 시점 |
 |---|---|
 | `nextjs-app` | Next.js App Router 페이지·레이아웃·Server Component·Route Handler·Server Action 작업 |
 | `prisma-schema` | `schema.prisma` 모델·관계·마이그레이션·시드 데이터 작업 |
 | `authjs-rbac` | Auth.js v5 설정, RBAC 6 Role 정책, 미들웨어, 세션·콜백 작업 |
 | `tailwind-shadcn` | Tailwind CSS + shadcn/ui 컴포넌트, 디자인 토큰, 접근성 작업 |
+
+**스택 패턴 (Next.js 모범 사례)**:
+| 에이전트 | 사용 시점 |
+|---|---|
+| `nextjs-frontend` | Server/Client Component, 페이지, 레이아웃, shadcn/ui (`app/**/*.tsx`, `components/**/*.tsx`) |
+| `nextjs-backend` | Server Actions, Route Handlers(`app/api/**`), 비즈니스 로직, `lib/` 유틸 |
+| `database` | Prisma 스키마·마이그레이션, Supabase 설정, Mock ERP 테이블. ERP 모델은 Read-Only 다층 방어 적용 |
+| `ai-integration` | (Phase 2) 사내 LLM 호출 큐·Rate Limit·XAI. 외부 LLM은 D8 위배로 금지 — Phase 2 Ollama 도입 후 활성 |
+| `pdf-client` | 클라이언트 사이드 PDF 생성 (`@react-pdf/renderer`, `window.print()`). 서버 사이드 PDF 금지 |
 
 ### Slash Commands (`.claude/commands/`)
 | 커맨드 | 목적 |

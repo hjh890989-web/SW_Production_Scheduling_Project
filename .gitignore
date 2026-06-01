@@ -93,11 +93,6 @@ venv/
 env/
 .python-version
 
-# ----- AI ruleset reference (참조용 외부 리포 — 본 저장소에서 추적 안 함) -----
-AI-ruleset-sample/
-goal-setting-skill/
-profile-sum-skill/
-
 # ----- 임시 / 백업 -----
 *.bak
 *.tmp

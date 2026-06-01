@@ -1,136 +1,66 @@
 ---
-description: FactoryAI 기술 스택 — Next.js 풀스택 모놀리스 (MVP)
+description: EVS 기술 스택 (Next.js 14+ / Prisma / Auth.js v5 / PostgreSQL / Docker) 항상 적용
 globs: ["**/*"]
 alwaysApply: true
 ---
 
-# 002 — Technical Stack
+# 002 — Tech Stack
 
-> **원천**: [`docs/2_SRS_V_1.0.md`](../../docs/2_SRS_V_1.0.md) SRS v0.8 §1.2.3 (CON-01~12) / §10 (ADR-1~11)
+> **원천**: [`Stage_A/4_개발계획서_v1.3.md`](../../Stage_A/4_개발계획서_v1.3.md) §13 (하이브리드 스택 + Cloud-Ready), [`Stage_C/19_PRD_v1.4.md`](../../Stage_C/19_PRD_v1.4.md) 부록 B
 
-## 1. MVP 스택 (현재 적용)
+## Frontend
 
-### Frontend / Backend (단일 프레임워크)
-- **Framework**: Next.js 15+ (**App Router**) — CON-01 / ADR-8
-- **Language**: TypeScript (strict 모드)
-- **Server 로직**: Server Actions + Route Handlers — CON-11 (별도 백엔드 서버 없음)
-- **UI 라이브러리**: shadcn/ui (Radix 기반)
-- **스타일링**: Tailwind CSS — CON-10
-- **Form**: React Hook Form + Zod
-- **테이블**: TanStack Table v8
+- **Framework**: Next.js 14+ **App Router** (`output: 'standalone'`)
+- **Language**: TypeScript (strict)
+- **Styling**: Tailwind CSS 3.x
+- **Component Library**: shadcn/ui (Radix UI 기반)
+- **상태/폼**: React Server Components + Server Actions, 클라이언트 폼은 React Hook Form + zod
+- **차트**: Recharts 또는 Visx (KPI 대시보드 — 결정 보류)
+- **간트**: [T0.8](../../Stage_D/issues/T0.8_gantt-library-poc.md) PoC 결과 (ADR D-23)
 
-### Database
-- **ORM**: Prisma — CON-09 / ADR-10
-- **Dev**: SQLite (로컬 빠른 반복)
-- **MVP**: Supabase PostgreSQL (Free Tier, 500MB)
-- **PROD (Phase 2)**: Local PostgreSQL (Docker)
+## Backend
 
-### AI / LLM
-- **SDK**: Vercel AI SDK — ADR-9
-- **Provider**: Google Gemini API
-- **티어 (MVP)**: Free Tier 15 RPM Flash → PoC 시 유료 ($15/월)
-- **로컬 LLM (Phase 2)**: Ollama / vLLM 전환 목표
+- **Runtime**: Node.js 20 LTS
+- **API**: Next.js Route Handlers + Server Actions (별도 백엔드 서버 없음 — D19 하이브리드 모노리포)
+- **ORM**: **Prisma**
+- **Database (dev)**: SQLite (`prisma/dev.db`)
+- **Database (prod)**: **PostgreSQL 16** (사내 단일 인스턴스)
+- **객체 저장소**: MinIO (S3 호환) — 첨부·PDF 출력물
+- **배치/스케줄러**: 호스트 cron (백업·아카이빙) + Node-cron (앱 내부)
+- **최적화 엔진 (Phase 2)**: Python + **OR-Tools** 마이크로서비스 (Sprint 12.1~12.3)
 
-### Storage / File
-- **Supabase Storage** (1GB Free) — 이미지·오디오 원본
-- **PDF 생성**: 클라이언트 사이드 (`@react-pdf/renderer` 브라우저 모드 또는 `window.print()`) — CON-07 / ASM-09
+## Authentication & Authorization
 
-### Auth
-- **NextAuth.js v5 (Auth.js)** — 확정 (2026-05-16). Phase 2 On-Prem 전환·외부 의존 최소화 정신과 일관
-- **RBAC 역할**: `ADMIN`, `OPERATOR`, `QC`, `CISO`, `VIEWER`
-- **Provider (MVP)**: Credentials (이메일+비밀번호, bcrypt 해시)
-- **Provider (Phase 2)**: SAML / OIDC (제조 고객사 사내 계정 통합)
-- **세션 전략**: JWT (Stateless, 서버리스 친화)
+- **Auth.js v5** (NextAuth 후속) — Credentials provider + bcrypt(12)
+- 사내 LDAP 연동은 **Phase 2 ([T12.4](../../Stage_D/issues/T12.4.1_ad-ldap-review.md), ADR D-26)**
+- **RBAC 6 Role**: ADMIN / PRODUCTION_MANAGER / SALES_PURCHASE / MATERIAL / EXTRUSION_LEADER / MOLDING_LEADER / EXECUTIVE (R-13)
+- 5회 실패 시 계정 잠금, 세션 8h idle, secure cookie + SameSite=Strict + AuditLog IP/sessionId
 
-### Deployment
-- **호스팅**: Vercel (Free Tier) — CON-04, CON-12
-- **자동 배포**: Git Push → Vercel 빌드 → 자동 롤백 지원
-- **DNS / Edge**: Cloudflare (선택, Free)
+## External Integrations
 
-### Dev Tooling
-- **Lint**: ESLint + `eslint-config-next`
-- **Format**: Prettier
-- **Type Check**: `tsc --noEmit`
-- **Test**: Vitest + React Testing Library (MVP 최소 커버리지)
-- **CI**: GitHub Actions (Phase 2)
+- **영림원 ERP**: 수주 헤더 마스터 (REST, Sprint 10 — TBD-2 사양 미정)
+- **자체 MES**: 작업실적 동기화 (REST/Webhook, Sprint 9 — TBD-3 stakeholder 미정)
+- **AI/ML 외부 API**: **금지** (D8 사내망 전용, PRD §5.3) — 위배 skills(`302-gemini-throttle`, `305-vercel-ai-sdk-rules`)는 `.archive/`로 격리됨
 
----
+## Deployment & Operations
 
-## 2. 절대 금지 스택 (사용하지 말 것)
+- **OS**: Ubuntu 22.04 LTS (사내 단일 서버)
+- **컨테이너**: Docker Compose v2 (`restart: unless-stopped`), 7~9 서비스 (app + postgres + minio + nginx + loki + prometheus + grafana + (선택) sentry)
+- **Reverse Proxy**: nginx 1.25-alpine + 사내 CA 인증서 (TLS 종단)
+- **관측**: Loki + Prometheus + Grafana (PRD §5.5 강제, 자체호스팅)
+- **알림**: Grafana Alert + Slack 웹훅 + SMTP
+- **백업**: 호스트 cron `pg_dump` + MinIO `mc mirror` → 사내 NAS, 1년 보존 (Audit 5년 별도 파티셔닝)
+- **CI/CD**: GitHub Actions 사내 self-hosted runner (Jenkins/Harbor 미도입)
 
-| 금지 항목 | 이유 |
-|:---|:---|
-| Java / Spring Boot / Gradle | SRS에서 제외 — Next.js Server Actions로 대체 |
-| Kafka / RabbitMQ | MVP 단일 사용자 시나리오에 불필요 |
-| Flutter / React Native | MVP 모바일 클라이언트 없음 |
-| FastAPI / Django / Express | 별도 백엔드 서버 금지 (CON-11) |
-| Redis (Lettuce/Redisson) | Vercel 환경에 부적합, MVP에 불필요 |
-| MySQL | Prisma + PostgreSQL/SQLite 전용 |
-| Docker / Docker Compose (MVP) | Phase 2까지 보류 (CON-01P 이연) |
-| Hugging Face / OpenAI API | LLM은 Gemini 단일 (CON-08) |
-| LangChain / LangGraph | Vercel AI SDK 표준 사용 |
+## 의사결정 추적
 
-> **예외**: 위 기술이 SRS에 명시적으로 들어오는 Phase 2 이후 시점이면 해당 ADR 작성 후 재검토.
-
----
-
-## 3. 폴더 구조 (Convention)
-
-```
-my_RPA_AI_SaaS_app/
-├── app/                    # Next.js App Router
-│   ├── (auth)/             # 인증 라우트 그룹
-│   ├── (dashboard)/        # 메인 대시보드 라우트 그룹
-│   ├── api/v1/             # Route Handlers (REST API)
-│   ├── layout.tsx
-│   └── page.tsx
-├── components/
-│   ├── ui/                 # shadcn/ui 컴포넌트
-│   └── features/           # 기능별 컴포넌트
-├── lib/
-│   ├── prisma.ts           # Prisma 클라이언트 싱글톤
-│   ├── ai/                 # Vercel AI SDK 헬퍼 (Gemini, Rate Limit)
-│   ├── rbac.ts             # RBAC 가드
-│   └── utils.ts            # 공통 유틸 (cn 등)
-├── prisma/
-│   ├── schema.prisma
-│   ├── seed.ts
-│   └── migrations/
-├── public/                 # 정적 파일
-├── docs/                   # PRD/SRS/ADR
-└── tests/                  # Vitest 테스트
-```
-
-**경로 별칭**: `@/*` → 프로젝트 루트 (`tsconfig.json` paths).
-
----
-
-## 4. 환경 변수 (.env)
-
-```bash
-# Database
-DATABASE_URL="postgresql://..."           # Supabase PostgreSQL
-DIRECT_URL="postgresql://..."             # Prisma migration용 직접 연결
-
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL="https://..."
-NEXT_PUBLIC_SUPABASE_ANON_KEY="..."
-SUPABASE_SERVICE_ROLE_KEY="..."           # 서버 전용 — 클라이언트 노출 금지
-
-# Gemini
-GOOGLE_GENERATIVE_AI_API_KEY="..."
-
-# Auth (NextAuth 선택 시)
-NEXTAUTH_SECRET="..."
-NEXTAUTH_URL="https://..."
-```
-
-> `.env.local`은 절대 커밋 금지 (이미 `.gitignore`에 포함).
-
----
-
-## See also
-
-- [001-project-overview.md](001-project-overview.md)
-- [003-development-guidelines.md](003-development-guidelines.md)
-- [004-hitl-and-security.md](004-hitl-and-security.md)
+| 결정 | 내용 |
+|---|---|
+| D-8 | 사내망 전용 (외부 SaaS·LLM 금지) |
+| D-19 | 하이브리드 스택 (Next.js + Prisma 단일 모노리포) |
+| D-20 | Cloud-Ready 12-Factor (향후 클라우드 이전 옵션) |
+| D-22 | TBD-5 시뮬레이션 인터뷰 1차 종결 ([ADR](../../Stage_C/22_ADR_D22_TBD5종결_v1.0.md)) |
+| D-23 | 간트 라이브러리 선정 (T0.8 결과로 결정 — 보류) |
+| D-24 | (예약) J-MR-2 재설계 — T5.12 박철수 만족도 <4/5 시 발의 |
+| D-25 | KSF-3 단위 이원화 (5분 perceived / 5초 server) ([ADR](../../Stage_C/23_ADR_D25_KSF3단위명확화_v1.0.md)) |
+| D-26 | (예약) LDAP 연동 방식 (T12.4.1) |
