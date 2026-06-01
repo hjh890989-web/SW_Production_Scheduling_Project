@@ -1,0 +1,39 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  passwordHash  String
+  name          String?
+  role          String   @default("MoldingForeman")
+  failedLogins  Int      @default(0)
+  lockedUntil   DateTime?
+  sessionVersion Int     @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  userId       String?
+  action       String
+  targetTable  String?
+  targetKey    String?
+  beforeValue  String?
+  afterValue   String?
+  reason       String?
+  ipAddress    String?
+  sessionId    String?
+  userAgent    String?
+  timestamp    DateTime @default(now())
+
+  @@index([userId, timestamp])
+  @@index([targetTable, targetKey])
+}
