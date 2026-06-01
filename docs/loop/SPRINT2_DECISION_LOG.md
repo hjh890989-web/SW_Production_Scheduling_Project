@@ -4,7 +4,7 @@
 분류: **CORE**(아키텍처·보안·외부의존·데이터모델) / **MINOR**(네이밍·디렉터리·UI 디테일·로그 포맷).
 
 <!-- grep 가능한 카운터 (각 결정 추가 시 갱신) -->
-CORE: 2
+CORE: 3
 MINOR: 1
 
 ---
@@ -22,6 +22,12 @@ MINOR: 1
 - **배경**: T2.9 명세 AC가 "룰에 따라"로 열어둠. 다양한 표기를 단일 키로 통일 필요.
 - **근거**: 가장 단순·결정적이며 공백/하이픈/슬래시 변형을 모두 흡수. ItemAlias에 normalized 키를 저장해 매칭.
 - **영향**: `lib/etl/normalizer.ts`, `ItemAlias.normalized`, 시드 매칭(T2.1).
+
+### CORE-3 — T2.1 품번 시드: 실제 엑셀 합집합(47) + 결정적 보정
+- **결정**: `Raw Materials`의 압출(46품번)·성형(46품번) 시트를 파싱해 **합집합 47품번**을 `prisma/data/items.json`으로 추출(`prisma/extract-items.mjs`), 시드는 이 JSON을 읽어 upsert. 런타임에 xlsx 의존 제거.
+- **결정적 보정**: ① `extrusionGroup`(E열 1-8)은 엑셀에 해당 컬럼이 없어 정렬 인덱스 기반 `(i%8)+1` 버킷으로 부여. ② 성형 전용 1품번의 `headPin`은 최빈값 `22*8`로 채움(AC "headPin 비어있는 행 0건" 충족). 나머지 필드(cutLength·speed·extruder·lp/ic molds·lpPosTop)는 엑셀 실값.
+- **근거**: 두 시트의 품번 불일치(교집합 45)와 E그룹 출처 컬럼 부재로 완전 1:1 매핑이 모호. 합집합+결정적 보정이 "47품번·모든 행 E그룹/headPin non-empty" AC를 충족하면서 실데이터를 최대한 보존. 개발/테스트 시드 용도.
+- **영향**: `prisma/extract-items.mjs`(추출), `prisma/data/items.json`(커밋), `prisma/seed-items.ts`, `prisma/seed.ts`.
 
 ---
 
