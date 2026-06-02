@@ -2,6 +2,7 @@
 
 import type { GridModel, GridCell, DayNight } from '@/lib/gantt/types';
 import { cellClass, statusBadge, SCHEDULE_LEGEND } from '@/lib/molding/cell-style';
+import { explainCell } from '@/lib/molding/cell-tooltip';
 
 export interface MoveTargetCoord {
   equipmentCode: string;
@@ -88,6 +89,7 @@ export function ScheduleGrid({
                                 }
                               : undefined
                           }
+                          title={explainCell(cell)}
                           className={`min-h-11 rounded px-1 py-1 text-center text-sm ${canDrag ? 'cursor-move' : ''} ${cellClass(cell.status, cell.ruleViolation)}`}
                         >
                           <div className="font-mono text-xs">
