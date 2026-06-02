@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ExtrusionGrid, type ExtMoveCoord } from '@/components/extrusion/extrusion-grid';
 import { LoadBalanceGraph } from '@/components/extrusion/load-balance-graph';
 import { ExcelDownloadButton } from '@/components/export/excel-download-button';
+import { AlgorithmToggle } from '@/components/scheduler/algorithm-toggle';
 import type { ExtGridModel } from '@/lib/extrusion/grid';
 import type { DayLoad } from '@/lib/extrusion/load-balance';
 import { generateExtrusionScheduleAction } from '@/lib/extrusion/extrusion-actions';
@@ -76,6 +77,7 @@ export function ExtrusionClient({
             확정
           </Button>
           <ExcelDownloadButton weekStart={weekStart} />
+          <AlgorithmToggle />
         </div>
       </header>
 
