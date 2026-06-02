@@ -3,11 +3,12 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { ExtrusionGrid } from '@/components/extrusion/extrusion-grid';
+import { ExtrusionGrid, type ExtMoveCoord } from '@/components/extrusion/extrusion-grid';
 import { LoadBalanceGraph } from '@/components/extrusion/load-balance-graph';
 import type { ExtGridModel } from '@/lib/extrusion/grid';
 import type { DayLoad } from '@/lib/extrusion/load-balance';
 import { generateExtrusionScheduleAction } from '@/lib/extrusion/extrusion-actions';
+import { moveExtrusionSchedule, confirmExtrusionSchedule } from '@/lib/extrusion/move-actions';
 
 export function ExtrusionClient({
   weekStart,
@@ -35,6 +36,24 @@ export function ExtrusionClient({
     });
   }
 
+  function onMove(scheduleId: string, target: ExtMoveCoord, expectedUpdatedAt: string) {
+    setMsg(null);
+    startTransition(async () => {
+      const res = await moveExtrusionSchedule(scheduleId, target, expectedUpdatedAt);
+      setMsg({ text: res.message, ok: res.ok && !res.ruleViolation });
+      if (res.ok) router.refresh();
+    });
+  }
+
+  function confirm() {
+    setMsg(null);
+    startTransition(async () => {
+      const res = await confirmExtrusionSchedule(weekStart);
+      setMsg({ text: res.message, ok: res.ok });
+      if (res.ok) router.refresh();
+    });
+  }
+
   return (
     <main className="mx-auto max-w-7xl p-6">
       <header className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -44,9 +63,14 @@ export function ExtrusionClient({
             주간 시작 {weekStart} · 관체 요청 기반 자동 배치 {cellCount}셀. (E그룹·헤드핀 묶음으로 다이/노즐 변경 최소화)
           </p>
         </div>
-        <Button onClick={generate} disabled={pending} className="h-11 text-base">
-          {pending ? '생성 중…' : '자동 스케줄 생성'}
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={generate} disabled={pending} className="h-11 text-base">
+            {pending ? '생성 중…' : '자동 스케줄 생성'}
+          </Button>
+          <Button onClick={confirm} disabled={pending || cellCount === 0} variant="outline" className="h-11 text-base">
+            확정
+          </Button>
+        </div>
       </header>
 
       {msg && (
@@ -81,7 +105,7 @@ export function ExtrusionClient({
           압출기 시드가 필요합니다. (npx prisma db seed)
         </p>
       ) : (
-        <ExtrusionGrid model={model} />
+        <ExtrusionGrid model={model} onMove={onMove} />
       )}
     </main>
   );
