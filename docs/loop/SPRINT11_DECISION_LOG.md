@@ -22,7 +22,12 @@ CORE=아키텍처·보안·외부의존, MINOR=네이밍·UI·로그 포맷.
 - 70 AC 전수 대신, 14 스토리를 seed 사용자 6역할로 매핑해 라우트 진입·핵심 UI 렌더를 Playwright로 검증(`npm run test:e2e` 분리, typecheck 게이트 포함).
 - 드래그 등 복합 상호작용(MR-2 J-MR-2)은 진입점·그리드 렌더 확인으로 대표(상세 드래그는 기존 `molding.spec.ts` 보유).
 
+### MINOR-2 (T11.3) CSP 단일 소스는 CommonJS 모듈(`lib/security/headers.js`)
+- `next.config.js`(CommonJS)가 TS를 import 못 하므로, 헤더 정의를 `.js` 단일 모듈로 두고 next.config(require)·vitest(import)가 공유 → 드리프트 0.
+- `allowJs: true`라 .ts 테스트에서 .js import 가능. CSP는 'self' 기반·외부 origin 불허(사내망), Next 런타임상 inline은 'unsafe-inline' 허용.
+- `npm audit --audit-level=high`/OWASP ZAP는 `docs/operations.md` 런북에 절차로 이연(CI·외부도구 금지 유지).
+
 ---
 
 CORE: 1
-MINOR: 1
+MINOR: 2
