@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ScheduleGrid, type MoveTargetCoord } from '@/components/molding/schedule-grid';
+import { ExcelDownloadButton } from '@/components/export/excel-download-button';
 import type { GridModel } from '@/lib/gantt/types';
 import { generateMoldingScheduleAction } from '@/lib/scheduler/molding-actions';
 import { moveMoldingSchedule } from '@/lib/scheduler/move-actions';
@@ -58,9 +59,12 @@ export function MoldingClient({
             주간 시작 {weekStart} · 자동 백워드(D-2) 초안 {cellCount}셀. 셀을 드래그해 가류기·일자를 재배분합니다(자동→수동).
           </p>
         </div>
-        <Button onClick={generate} disabled={pending} className="h-11 text-base">
-          {pending ? '생성 중…' : '자동 스케줄 생성'}
-        </Button>
+        <div className="flex items-start gap-2">
+          <Button onClick={generate} disabled={pending} className="h-11 text-base">
+            {pending ? '생성 중…' : '자동 스케줄 생성'}
+          </Button>
+          <ExcelDownloadButton weekStart={weekStart} />
+        </div>
       </header>
 
       {summary && summary.total > 0 && (
