@@ -32,5 +32,11 @@ T9.1~T9.6 자동화 루프(`/goal`)의 명세 미확정 결정 기록. CORE=아�
 
 ---
 
+### MINOR-4 (T9.4) 재시도 큐는 DB 기반 `MesRetryQueue` + 5분 고정 간격
+- BullMQ/Redis 미도입(신규 의존성 금지) → `MesRetryQueue` 테이블에 PENDING/SENT/FAILED 상태로 적재.
+- 재시도 간격은 명세대로 5분 고정(`nextRetryAt = now + 5분`). 송신 성공 200 / 큐 적재 202.
+
+---
+
 CORE: 2
-MINOR: 3
+MINOR: 4
