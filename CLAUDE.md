@@ -35,7 +35,12 @@
 - ✅ Stage_B 페르소나·JTBD·VPS — [Stage_B/](Stage_B/)
 - ✅ Stage_C PRD v1.4 + **WBS v1.1** (13 Sprint × **117 Task**, T0.8/T5.12 추가) + ADR D-22/D-25 — [Stage_C/](Stage_C/)
 - ✅ Stage_D 115개 GitHub Issue 명세서 (T0.1 ~ T12.7.4) — [Stage_D/issues/](Stage_D/issues/)
-- 🔜 **현재: Sprint 0 코드 착수 직전** (T0.1 Next.js 프로젝트 생성부터)
+- ✅ **Sprint 0~12 구현 완료** — 코드 검증 가능 task 전부 main에 선형 머지(테스트 350 통과). `/goal` 자동 루프(task별 feature 브랜치 + 5종 게이트 exit 0 + 스택 PR → 통합 squash 머지)로 진행.
+- 🔜 **남은 작업 = 인프라 적용(코드 외)** — Sprint 11/12에서 실행 불가로 **런북 이연**한 항목을 사내 서버에서 적용:
+  - 출시 인프라([docs/operations.md](docs/operations.md)): 사내 서버 배포(compose·nginx·HTTPS)·Sentry self-hosted·Grafana KSF 대시보드·k6 부하·Lighthouse CI·백업/복구/Audit 5년 아카이빙
+  - Phase 2 외부서비스([docs/operations-phase2.md](docs/operations-phase2.md)): OR-Tools 솔버(FastAPI)·Ollama LLM(사내)·AD/LDAP SSO — 코드 측 추상화(`ISolverEngine`·`ILlmProvider`)는 머지 완료, 실 서비스 도입 시 Mock만 교체
+  - 적용 시 신규 의존성(`@sentry/nextjs`·`@lhci/cli`·ortools 등)·`.github/workflows`는 별도 PR로 추가(자동 루프 제약과 분리)
+- 각 Sprint 의사결정 로그: [docs/loop/SPRINT{1..12}_DECISION_LOG.md](docs/loop/)
 
 ---
 
