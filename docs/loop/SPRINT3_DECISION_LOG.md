@@ -5,7 +5,7 @@
 
 <!-- grep 가능한 카운터 (각 결정 추가 시 갱신) -->
 CORE: 3
-MINOR: 1
+MINOR: 2
 
 ---
 
@@ -31,5 +31,10 @@ MINOR: 1
 
 ### MINOR-1 — 디렉터리/네이밍 컨벤션 (Sprint 3)
 - 파서·ETL `lib/etl/`, 수주 도메인 로직 `lib/orders/`(types·filter·priority·actions), 수주 화면 `app/(dashboard)/orders/{upload,change}/`, 매핑 GUI `app/(dashboard)/master/mapping/`. 파일 업로드는 react-dropzone 대신 네이티브 input 사용(의존성 최소화).
+
+---
+
+### MINOR-2 — T3.9 E2E는 Playwright 스펙만, CI 워크플로 미포함
+- T3.9는 `tests/e2e/orders-upload.spec.ts`(Playwright)를 추가하나 `.github/workflows/`는 goal 수정금지 제약으로 CI 미연동. 실행: `npx playwright install chromium && npx prisma db seed && npm run test:e2e`.
 
 ---
