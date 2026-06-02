@@ -7,17 +7,20 @@ import { ScheduleGrid, type MoveTargetCoord } from '@/components/molding/schedul
 import type { GridModel } from '@/lib/gantt/types';
 import { generateMoldingScheduleAction } from '@/lib/scheduler/molding-actions';
 import { moveMoldingSchedule } from '@/lib/scheduler/move-actions';
+import type { StatusSummary } from '@/lib/molding/status-summary';
 
 export function MoldingClient({
   weekStart,
   model,
   cellCount,
   violations = [],
+  summary,
 }: {
   weekStart: string;
   model: GridModel;
   cellCount: number;
   violations?: string[];
+  summary?: StatusSummary;
 }) {
   const router = useRouter();
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
@@ -55,6 +58,17 @@ export function MoldingClient({
           {pending ? '생성 중…' : '자동 스케줄 생성'}
         </Button>
       </header>
+
+      {summary && summary.total > 0 && (
+        <div className="mb-3 flex flex-wrap gap-2 text-sm">
+          <span className="rounded bg-gray-100 px-3 py-1 text-gray-700">자동 {summary.AUTO}</span>
+          <span className="rounded border border-blue-500 bg-blue-50 px-3 py-1 text-blue-800">수동 {summary.MANUAL}</span>
+          <span className="rounded border border-green-500 bg-green-50 px-3 py-1 text-green-800">확정 {summary.CONFIRMED}</span>
+          {summary.ruleViolations > 0 && (
+            <span className="rounded bg-red-100 px-3 py-1 text-red-700">위반 {summary.ruleViolations}</span>
+          )}
+        </div>
+      )}
 
       {msg && (
         <p className={`mb-3 rounded-md p-3 text-sm ${msg.ok ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`} role="alert">

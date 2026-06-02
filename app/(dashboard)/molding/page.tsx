@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { prisma } from '@/lib/db';
 import { buildColumns, buildRows, buildCells, type CalendarInput, type EquipmentInput } from '@/lib/gantt/adapter';
 import { weekMonday, loadWeekEntries, getWeekViolations } from '@/lib/scheduler/molding-service';
+import { summarizeStatus } from '@/lib/molding/status-summary';
 import { MoldingClient } from './molding-client';
 
 export const metadata: Metadata = { title: '성형 스케줄 W-4 · EVS' };
@@ -37,6 +38,9 @@ export default async function MoldingPage({ searchParams }: { searchParams: { we
   };
 
   const violationLabels = violations.map((v) => `${v.productCode} @ ${v.equipmentCode}/${v.slot} (${v.date})`);
+  const summary = summarizeStatus(model.cells);
 
-  return <MoldingClient weekStart={weekStart} model={model} cellCount={entries.length} violations={violationLabels} />;
+  return (
+    <MoldingClient weekStart={weekStart} model={model} cellCount={entries.length} violations={violationLabels} summary={summary} />
+  );
 }
