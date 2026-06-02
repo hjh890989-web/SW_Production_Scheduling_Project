@@ -27,3 +27,5 @@ MINOR: 1
 - 스케줄러 `lib/scheduler/`(types·molding-scheduler), 그리드 어댑터 `lib/gantt/`, W-4 화면 `app/(dashboard)/molding/`, 그리드 컴포넌트 `components/molding/`, 베타 테스트 플랜 `docs/`.
 
 ---
+
+STOP REASON: ALL_PRS_DONE (T5.1~T5.12 12개 draft PR 모두 생성 — PR #45~#56)
