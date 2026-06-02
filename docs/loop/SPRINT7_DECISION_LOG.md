@@ -24,3 +24,5 @@ MINOR: 1
 - 시뮬 로직 `lib/scheduler/impact-simulator.ts`(순수), 색상/유틸 `lib/impact/`, W-3 패널은 T3.8 `app/(dashboard)/orders/change/`에 추가, 하이라이트는 W-4/W-5 그리드 컴포넌트 재사용.
 
 ---
+
+STOP REASON: ALL_PRS_DONE (T7.1~T7.5 5개 draft PR 모두 생성 — PR #66~#70)
