@@ -32,6 +32,7 @@ model Item {
   aliases        ItemAlias[]
   orders         Order[]
   moldingSchedules MoldingSchedule[]
+  extrusionSchedules ExtrusionSchedule[]
 
   @@index([extrusionGroup])
 }
@@ -57,8 +58,32 @@ model Equipment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   moldingSchedules MoldingSchedule[]
+  extrusionSchedules ExtrusionSchedule[]
 
   @@index([type])
+}
+
+model ExtrusionSchedule {
+  id             String   @id @default(cuid())
+  weekStart      DateTime
+  date           DateTime
+  shift          String // DAY_FIRST / DAY_SECOND / NIGHT_FIRST / NIGHT_SECOND
+  extruderId     String
+  itemId         String
+  orderId        String?
+  quantity       Int
+  extrusionGroup Int?
+  headPin        String?
+  status         String   @default("AUTO") // AUTO / MANUAL / CONFIRMED (CORE-1 String)
+  ruleViolation  Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  item           Item      @relation(fields: [itemId], references: [id])
+  extruder       Equipment @relation(fields: [extruderId], references: [id])
+
+  @@index([weekStart, extruderId])
+  @@index([date, shift])
+  @@index([itemId])
 }
 
 model MoldingSchedule {
