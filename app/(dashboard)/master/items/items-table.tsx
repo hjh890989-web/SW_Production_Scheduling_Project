@@ -17,10 +17,13 @@ import {
   addItemAlias,
   removeItemAlias,
 } from '@/lib/master/item-actions';
+import { filterByMaterial, countByMaterial, type MaterialFilter } from '@/lib/material/filter';
+import { MATERIALS, MATERIAL_LABEL } from '@/lib/material/material';
 
 export interface ItemRow {
   id: string;
   productCode: string;
+  material: string;
   customerCode: string | null;
   hwasungCode: string | null;
   headPin: string | null;
@@ -152,10 +155,20 @@ function AliasManager({ row }: { row: ItemRow }) {
 export function ItemsTable({ rows }: { rows: ItemRow[] }) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [filter, setFilter] = useState('');
+  const [materialFilter, setMaterialFilter] = useState<MaterialFilter>('ALL');
+
+  const counts = useMemo(() => countByMaterial(rows), [rows]);
+  const filteredRows = useMemo(() => filterByMaterial(rows, materialFilter), [rows, materialFilter]);
 
   const columns = useMemo<ColumnDef<ItemRow>[]>(
     () => [
       { accessorKey: 'productCode', header: '품번', enableSorting: true },
+      {
+        accessorKey: 'material',
+        header: '자재',
+        enableSorting: true,
+        cell: ({ row }) => MATERIAL_LABEL[row.original.material as keyof typeof MATERIAL_LABEL] ?? row.original.material,
+      },
       {
         accessorKey: 'customerCode',
         header: '고객사 품번',
@@ -188,7 +201,7 @@ export function ItemsTable({ rows }: { rows: ItemRow[] }) {
   );
 
   const table = useReactTable({
-    data: rows,
+    data: filteredRows,
     columns,
     state: { sorting, globalFilter: filter },
     onSortingChange: setSorting,
@@ -200,12 +213,27 @@ export function ItemsTable({ rows }: { rows: ItemRow[] }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <Input
-        value={filter}
-        onChange={(e) => setFilter(e.target.value)}
-        placeholder="품번·고객사 품번 검색"
-        className="max-w-xs"
-      />
+      <div className="flex flex-wrap items-center gap-2">
+        <Input
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          placeholder="품번·고객사 품번 검색"
+          className="max-w-xs"
+        />
+        <select
+          value={materialFilter}
+          onChange={(e) => setMaterialFilter(e.target.value as MaterialFilter)}
+          aria-label="자재 필터"
+          className="h-10 rounded-md border border-input bg-background px-3 text-base"
+        >
+          <option value="ALL">전체 자재 ({rows.length})</option>
+          {MATERIALS.map((m) => (
+            <option key={m} value={m}>
+              {MATERIAL_LABEL[m]} ({counts[m] ?? 0})
+            </option>
+          ))}
+        </select>
+      </div>
       <div className="overflow-x-auto rounded-md border">
         <table className="w-full text-base">
           <thead className="bg-muted/50">
