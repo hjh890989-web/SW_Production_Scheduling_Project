@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { changeSchema, CHANGE_TYPES, type ChangeInput } from '@/lib/orders/change-schema';
 import { submitOrderChange, cancelOrderChange } from '@/lib/orders/change-actions';
+import { ImpactPanel } from '@/components/impact/impact-panel';
 
 export function ChangeForm({ productCodes }: { productCodes: string[] }) {
   const [pending, startTransition] = useTransition();
@@ -20,8 +21,12 @@ export function ChangeForm({ productCodes }: { productCodes: string[] }) {
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
   } = useForm<ChangeInput>({ resolver: zodResolver(changeSchema), defaultValues: { changeType: '수량' } });
+
+  const watchedCode = watch('productCode');
+  const watchedType = watch('changeType');
 
   useEffect(() => {
     if (countdown <= 0) return;
@@ -65,6 +70,7 @@ export function ChangeForm({ productCodes }: { productCodes: string[] }) {
           ))}
         </datalist>
         {errors.productCode && <p className="text-sm text-red-600">{errors.productCode.message}</p>}
+        <ImpactPanel productCode={watchedCode} changeType={watchedType} />
       </div>
 
       <div className="flex flex-col gap-2">
