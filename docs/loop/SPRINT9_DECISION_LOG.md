@@ -11,6 +11,10 @@ T9.1~T9.6 자동화 루프(`/goal`)의 명세 미확정 결정 기록. CORE=아�
 - `env MES_CLIENT=live`도 현재는 `MesClientMock`으로 fallback + 경고(AC T9.1-F1). 외부 호출 코드 미작성(사내망·외부 호출 금지 준수).
 - 인터페이스(`IMesClient`)·타입(`types.ts`)·Mock만 확정해 후속 task(T9.2~9.5)가 추상화에 의존하도록 한다.
 
+### CORE-2 (T9.2) 실적 수신 인증: API key 헤더(`x-mes-api-key`) + audit
+- IP 화이트리스트 대신 env `MES_API_KEY`와 헤더 비교(사내망 + AuditLog 기록으로 충분). 빈 env면 항상 401.
+- 멱등성은 `ProductionResult.externalId @unique` + 수신 시 존재검사로 중복 INSERT 방지.
+
 ---
 
 ## MINOR
@@ -19,7 +23,10 @@ T9.1~T9.6 자동화 루프(`/goal`)의 명세 미확정 결정 기록. CORE=아�
 - 실적 레코드에 `externalId`(MES 고유 ID)를 멱등성 키로 둔다(T9.2 @unique 연계).
 - 공정 구분은 String union `'MOLDING' | 'EXTRUSION'`(CORE-1 패턴).
 
+### MINOR-2 (T9.2) 스키마 반영은 `prisma db push`
+- 본 프로젝트는 `prisma/migrations/`가 없고 db push 기반 → 신규 모델도 동일 방식. 마이그레이션 파일 생성/수정 없음(제약 준수).
+
 ---
 
-CORE: 1
-MINOR: 1
+CORE: 2
+MINOR: 2
