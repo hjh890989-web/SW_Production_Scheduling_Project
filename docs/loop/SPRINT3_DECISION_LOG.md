@@ -38,3 +38,5 @@ MINOR: 2
 - T3.9는 `tests/e2e/orders-upload.spec.ts`(Playwright)를 추가하나 `.github/workflows/`는 goal 수정금지 제약으로 CI 미연동. 실행: `npx playwright install chromium && npx prisma db seed && npm run test:e2e`.
 
 ---
+
+STOP REASON: ALL_PRS_DONE (T3.1~T3.9 9개 draft PR 모두 생성 — PR #28~#36)
