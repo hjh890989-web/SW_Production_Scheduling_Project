@@ -9,9 +9,26 @@ import { generatePipeRequests, type ScheduleForPipe, type PipeRequestItem } from
 import type { ExtEntryInput } from '@/lib/extrusion/grid';
 import type { Shift } from '@/lib/extrusion/die-change';
 import { dieChangeSummary, type DieChangeSummary } from '@/lib/extrusion/die-change-summary';
+import { loadBalanceByDay, type DayLoad } from '@/lib/extrusion/load-balance';
 
 function iso(d: Date): string {
   return d.toISOString().slice(0, 10);
+}
+
+/** 주간 라인 부하 균형 (T6.5). dailyCapacity = shiftCapacity*efficiency*4근무. */
+export async function getWeekLoadBalance(weekStartISO: string): Promise<{ days: DayLoad[]; extruderCodes: string[] }> {
+  const entries = await loadWeekExtrusion(weekStartISO);
+  const extruders = await prisma.equipment.findMany({ where: { type: 'EXTRUSION' }, orderBy: { code: 'asc' } });
+  const capRow = await prisma.operationParam.findUnique({ where: { key: 'extrusion_shift_capacity' } });
+  const effRow = await prisma.operationParam.findUnique({ where: { key: 'extrusion_efficiency' } });
+  const dailyCapacity = (capRow ? Number(capRow.value) : 1000) * (effRow ? Number(effRow.value) : 0.75) * 4;
+  const extruderCodes = extruders.map((e) => e.code);
+  const days = loadBalanceByDay(
+    entries.map((e) => ({ date: e.date, extruderCode: e.extruderCode, quantity: e.quantity })),
+    extruderCodes,
+    Math.max(1, Math.round(dailyCapacity)),
+  );
+  return { days, extruderCodes };
 }
 
 /** 주간 다이/노즐 변경 요약 (T6.4 — KSF-2, 계획 기준). */

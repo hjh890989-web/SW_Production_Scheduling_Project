@@ -4,7 +4,9 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ExtrusionGrid } from '@/components/extrusion/extrusion-grid';
+import { LoadBalanceGraph } from '@/components/extrusion/load-balance-graph';
 import type { ExtGridModel } from '@/lib/extrusion/grid';
+import type { DayLoad } from '@/lib/extrusion/load-balance';
 import { generateExtrusionScheduleAction } from '@/lib/extrusion/extrusion-actions';
 
 export function ExtrusionClient({
@@ -12,11 +14,13 @@ export function ExtrusionClient({
   model,
   cellCount,
   dieChange,
+  load,
 }: {
   weekStart: string;
   model: ExtGridModel;
   cellCount: number;
   dieChange?: { autoTotal: number; baselineTotal: number; reductionPct: number };
+  load?: { days: DayLoad[]; extruderCodes: string[] };
 }) {
   const router = useRouter();
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
@@ -63,6 +67,12 @@ export function ExtrusionClient({
             {dieChange.reductionPct >= 0 ? '▼' : '▲'} {Math.abs(dieChange.reductionPct)}% {dieChange.reductionPct >= 30 ? '(목표 달성)' : ''}
           </span>
           <span className="text-xs text-muted-foreground">※ MES 실적 미연동 — 계획 기준 (Sprint 9 연동)</span>
+        </div>
+      )}
+
+      {load && load.days.length > 0 && (
+        <div className="mb-3">
+          <LoadBalanceGraph days={load.days} extruderCodes={load.extruderCodes} />
         </div>
       )}
 
