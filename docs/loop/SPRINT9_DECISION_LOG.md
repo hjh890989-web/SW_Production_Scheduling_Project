@@ -38,5 +38,11 @@ T9.1~T9.6 자동화 루프(`/goal`)의 명세 미확정 결정 기록. CORE=아�
 
 ---
 
+### MINOR-5 (T9.5) 폴링 cron은 명시 등록(`registerMesCron`) + "5분 연속=1주기" 알림
+- 기존 `registerKsfCron` 패턴대로 `runMesSync`/`processRetryQueue` 비즈니스 함수 + `registerMesCron()` 분리(빌드/테스트 시 미실행).
+- 5분 주기이므로 1회 실패 주기 = 5분 연속 실패로 보고 알림 임계 1(설정 가능). `mes_last_sync_at`(OperationParam)로 since 추적.
+
+---
+
 CORE: 2
-MINOR: 4
+MINOR: 5
