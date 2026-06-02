@@ -14,6 +14,7 @@ export default async function ItemsMasterPage() {
   const rows: ItemRow[] = items.map((i) => ({
     id: i.id,
     productCode: i.productCode,
+    material: i.material,
     customerCode: i.customerCode,
     hwasungCode: i.hwasungCode,
     headPin: i.headPin,
@@ -30,7 +31,7 @@ export default async function ItemsMasterPage() {
       <header className="mb-4">
         <h1 className="text-2xl font-bold">품번 마스터 (W-6.1)</h1>
         <p className="mt-1 text-base text-muted-foreground">
-          실리콘 {rows.length}품번. 셀을 클릭해 인라인 편집, 별칭은 관리 버튼으로 추가·삭제합니다.
+          {rows.length}품번(실리콘·EPDM·NBR). 자재 필터로 좁히고, 셀을 클릭해 인라인 편집, 별칭은 관리 버튼으로 추가·삭제합니다.
         </p>
       </header>
       <ItemsTable rows={rows} />
