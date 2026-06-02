@@ -29,5 +29,13 @@ T10.1~T10.4 자동화 루프(`/goal`)의 명세 미확정 결정 기록. CORE=�
 
 ---
 
+### MINOR-4 (T10.4) 통합 테스트는 ErpClientMock 시나리오 + 메모리 변경분 집계 + E2E 인증
+- 정상/변경분/ERP 다운을 `ErpClientMock`으로 구동, `computeItemChanges`+`summarize` 규칙으로 신규/변경/무변경 분류를 vitest 게이트 내 검증(DB는 service 책임, 외부 호출 0).
+- `tests/e2e/erp.spec.ts`는 `/api/erp/sync` 인증(401)·응답(200/503) 계약 확인(`npm run test:e2e` 분리, ERP_API_KEY 미설정 시 skip).
+
+---
+
 CORE: 1
-MINOR: 3
+MINOR: 4
+
+STOP REASON: ALL_PRS_DONE
