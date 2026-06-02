@@ -11,6 +11,7 @@ const NAV = [
   { href: '/orders/change', label: '변동 입력' },
   { href: '/orders/audit', label: '감사 이력' },
   { href: '/work-instruction', label: '작업지시서' },
+  { href: '/reports/quarterly', label: '분기 리포트' },
   { href: '/master/items', label: '마스터' },
 ];
 

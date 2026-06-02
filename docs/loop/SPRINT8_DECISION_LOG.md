@@ -27,7 +27,12 @@ T8.1~T8.4 자동화 루프(`/goal`)의 명세 미확정 결정 기록. CORE=아�
 - 명세(T8.2)의 QR 코드는 "추후 MES 연동" 단서가 있어, 지금은 QR 라이브러리 도입 없이 결정적 작업지시 ID(`WI-YYYYMMDD-{M|E}-{line}`)를 인쇄면에 텍스트로 표기.
 - Sprint 9 MES 연동 시 동일 ID를 QR로 인코딩하도록 확장 여지 남김.
 
+### MINOR-3 (T8.3) 도입일(Before/After 경계)·디스크 부족 처리
+- 도입일은 `OperationParam.adoption_date`(없으면 분기 시작일)에서 읽어 Before/After를 가른다.
+- 시계열 차트는 신규 의존성 없이 커스텀 SVG(라인)로 그린다(KSF-1 납기율).
+- AC EX-2-F1(디스크 부족) 대비: 서버 PDF를 쓰지 않으므로(CORE-2) 서버 임시파일·디스크 점유가 없어 디스크 부족 실패 경로 자체가 제거됨(클라이언트 인쇄). 결정 기록.
+
 ---
 
 CORE: 2
-MINOR: 2
+MINOR: 3
