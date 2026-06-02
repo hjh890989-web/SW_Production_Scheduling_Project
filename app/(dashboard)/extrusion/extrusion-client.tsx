@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ExtrusionGrid, type ExtMoveCoord } from '@/components/extrusion/extrusion-grid';
 import { LoadBalanceGraph } from '@/components/extrusion/load-balance-graph';
+import { ExcelDownloadButton } from '@/components/export/excel-download-button';
 import type { ExtGridModel } from '@/lib/extrusion/grid';
 import type { DayLoad } from '@/lib/extrusion/load-balance';
 import { generateExtrusionScheduleAction } from '@/lib/extrusion/extrusion-actions';
@@ -74,6 +75,7 @@ export function ExtrusionClient({
           <Button onClick={confirm} disabled={pending || cellCount === 0} variant="outline" className="h-11 text-base">
             확정
           </Button>
+          <ExcelDownloadButton weekStart={weekStart} />
         </div>
       </header>
 
