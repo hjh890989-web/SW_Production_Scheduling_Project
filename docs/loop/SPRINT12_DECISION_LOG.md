@@ -33,5 +33,11 @@ CORE=아키텍처·보안·외부의존, MINOR=네이밍·UI·로그 포맷.
 
 ---
 
-CORE: 3
+### CORE-4 (T12.7.2) LLM provider 추상화 + Mock (사내 Ollama 미가동, 외부 LLM 금지)
+- `ILlmProvider` 인터페이스 + `MockLlmProvider` + 팩토리(env `OLLAMA_URL`). 외부 호출·네트워크 없음(D8 외부 LLM SaaS 금지 준수).
+- 실 추론은 Phase 2 사내 Ollama(12.7.1/3/4) 도입 후 OllamaProvider로 교체 → 현재 Mock 귀결.
+
+---
+
+CORE: 4
 MINOR: 1
