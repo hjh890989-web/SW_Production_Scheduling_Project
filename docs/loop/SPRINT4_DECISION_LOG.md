@@ -5,7 +5,7 @@
 
 <!-- grep 가능한 카운터 (각 결정 추가 시 갱신) -->
 CORE: 2
-MINOR: 1
+MINOR: 2
 
 ---
 
@@ -25,5 +25,10 @@ MINOR: 1
 
 ### MINOR-1 — 디렉터리/네이밍 컨벤션 (Sprint 4)
 - 알림 엔진 `lib/notification.ts`(순수)·`lib/notification-actions.ts`(서버액션), KPI cron `lib/cron/`, 메트릭 `app/api/metrics/`, 대시보드 위젯 `components/dashboard/`, 관측 인프라 `docker-compose.yml`·`infrastructure/{grafana,prometheus,loki}/`.
+
+---
+
+### MINOR-2 — T4.6 E2E는 Playwright 스펙만, CI 워크플로 미포함
+- T4.6 `tests/e2e/dashboard.spec.ts`(대시보드·변동→audit·감사이력·KSF 스냅샷)를 추가하나 `.github/workflows/`는 goal 수정금지 제약으로 CI 미연동. 실행: `npx playwright install chromium && npx prisma db seed && npm run test:e2e`.
 
 ---
