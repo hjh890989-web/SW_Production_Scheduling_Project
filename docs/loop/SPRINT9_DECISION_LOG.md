@@ -26,7 +26,11 @@ T9.1~T9.6 자동화 루프(`/goal`)의 명세 미확정 결정 기록. CORE=아�
 ### MINOR-2 (T9.2) 스키마 반영은 `prisma db push`
 - 본 프로젝트는 `prisma/migrations/`가 없고 db push 기반 → 신규 모델도 동일 방식. 마이그레이션 파일 생성/수정 없음(제약 준수).
 
+### MINOR-3 (T9.3) 재고 1행/품번(Inventory.itemId @id) + 납품 모델 동시 정의
+- `Inventory`는 품번당 단일 행(itemId PK), upsert로 갱신. 음수 가드는 트랜잭션 내 throw→롤백.
+- `DeliveryResult`도 동일 패턴으로 모델 선반영(납품 수신 엔드포인트는 Sprint 9 범위 밖 — MES 납품 피드 TBD). 재고 차감(−) 경로는 순수 함수로 테스트.
+
 ---
 
 CORE: 2
-MINOR: 2
+MINOR: 3

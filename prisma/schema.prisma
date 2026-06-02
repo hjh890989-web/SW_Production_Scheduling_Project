@@ -34,6 +34,8 @@ model Item {
   moldingSchedules MoldingSchedule[]
   extrusionSchedules ExtrusionSchedule[]
   productionResults ProductionResult[]
+  inventory       Inventory?
+  deliveryResults DeliveryResult[]
 
   @@index([extrusionGroup])
 }
@@ -199,6 +201,25 @@ model ProductionResult {
 
   @@index([itemId, producedAt])
   @@index([process, producedAt])
+}
+
+model Inventory {
+  itemId    String   @id // 품번당 1행
+  quantity  Int      @default(0) // 음수 금지(앱 레벨 가드, AC T9.3-F1)
+  updatedAt DateTime @updatedAt
+  item      Item     @relation(fields: [itemId], references: [id])
+}
+
+model DeliveryResult {
+  id          String   @id @default(cuid())
+  externalId  String?  @unique // 납품 실적 멱등 키(있을 때)
+  itemId      String
+  quantity    Int
+  deliveredAt DateTime
+  createdAt   DateTime @default(now())
+  item        Item     @relation(fields: [itemId], references: [id])
+
+  @@index([itemId, deliveredAt])
 }
 
 model User {

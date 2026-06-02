@@ -7,6 +7,8 @@ import {
   dedupeByExternalId,
   toProductionResultData,
 } from '@/lib/mes/result-mapping';
+import { applyInventoryChange } from '@/lib/inventory/inventory-service';
+import { productionDelta } from '@/lib/inventory/delta';
 
 export const dynamic = 'force-dynamic';
 
@@ -55,6 +57,8 @@ export async function POST(req: NextRequest) {
       continue;
     }
     await prisma.productionResult.create({ data: toProductionResultData(record, item.id) });
+    // T9.3: 생산 실적 적재 → 재고 자동 증가(트랜잭션·음수 가드)
+    await applyInventoryChange(item.id, productionDelta(record.quantity));
     inserted += 1;
   }
 
