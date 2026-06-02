@@ -39,5 +39,13 @@ CORE=아키텍처·보안·외부의존, MINOR=네이밍·UI·로그 포맷.
 
 ---
 
+### MINOR-2 (T12.OPS) Phase 2 외부서비스는 `docs/operations-phase2.md` 단일 런북으로 이연
+- OR-Tools 솔버(12.1/12.2/12.3.3·4), AD/LDAP SSO(12.4), Ollama LLM(12.7.1/3/4)을 FastAPI/compose/ldap/ollama 스니펫·임계치·검증 절차로 문서화.
+- 코드 측 추상화(ISolverEngine·ILlmProvider)가 머지돼 있어 실 서비스 도입 시 Mock만 교체.
+
+---
+
 CORE: 4
-MINOR: 1
+MINOR: 2
+
+STOP REASON: ALL_PRS_DONE
