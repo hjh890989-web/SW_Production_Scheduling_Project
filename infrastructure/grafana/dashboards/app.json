@@ -1,0 +1,13 @@
+{
+  "uid": "evs-app",
+  "title": "EVS - App",
+  "schemaVersion": 39,
+  "version": 1,
+  "tags": ["evs"],
+  "panels": [
+    { "id": 1, "type": "stat", "title": "Unread Notifications", "datasource": "Prometheus",
+      "targets": [{ "expr": "evs_unread_notifications" }], "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 } },
+    { "id": 2, "type": "logs", "title": "App Logs", "datasource": "Loki",
+      "targets": [{ "expr": "{job=\"varlogs\"}" }], "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 } }
+  ]
+}

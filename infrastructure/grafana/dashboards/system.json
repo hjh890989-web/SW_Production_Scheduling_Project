@@ -1,0 +1,13 @@
+{
+  "uid": "evs-system",
+  "title": "EVS - System",
+  "schemaVersion": 39,
+  "version": 1,
+  "tags": ["evs"],
+  "panels": [
+    { "id": 1, "type": "timeseries", "title": "Resident Memory", "datasource": "Prometheus",
+      "targets": [{ "expr": "process_resident_memory_bytes" }], "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 } },
+    { "id": 2, "type": "timeseries", "title": "Process Uptime", "datasource": "Prometheus",
+      "targets": [{ "expr": "process_uptime_seconds" }], "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 } }
+  ]
+}

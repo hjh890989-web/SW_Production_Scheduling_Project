@@ -1,0 +1,13 @@
+{
+  "uid": "evs-db",
+  "title": "EVS - Database",
+  "schemaVersion": 39,
+  "version": 1,
+  "tags": ["evs"],
+  "panels": [
+    { "id": 1, "type": "stat", "title": "Total Orders", "datasource": "Prometheus",
+      "targets": [{ "expr": "evs_orders_total" }], "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 } },
+    { "id": 2, "type": "stat", "title": "Total Users", "datasource": "Prometheus",
+      "targets": [{ "expr": "evs_users_total" }], "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 } }
+  ]
+}
