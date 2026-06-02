@@ -23,6 +23,8 @@ export interface ScheduleEntryInput {
   rotations: number;
   status: MoldingStatus;
   ruleViolation?: boolean;
+  scheduleId?: string;
+  updatedAt?: string;
 }
 
 /** 영업일 목록 → 각 일자를 주/야 2개 열로 (T5.1). */
@@ -63,6 +65,8 @@ export function buildCells(entries: ScheduleEntryInput[]): GridCell[] {
     rotations: e.rotations,
     status: e.status,
     ruleViolation: e.ruleViolation ?? false,
+    scheduleId: e.scheduleId,
+    updatedAt: e.updatedAt,
   }));
 }
 

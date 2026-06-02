@@ -1,15 +1,29 @@
 'use client';
 
-import type { GridModel, GridCell } from '@/lib/gantt/types';
+import type { GridModel, GridCell, DayNight } from '@/lib/gantt/types';
 import { cellClass, statusBadge, SCHEDULE_LEGEND } from '@/lib/molding/cell-style';
+
+export interface MoveTargetCoord {
+  equipmentCode: string;
+  slot: string;
+  date: string;
+  daynight: DayNight;
+}
 
 /**
  * W-4 슬롯 그리드 (T5.1 커스텀 그리드, CORE-1). 행=가류기·슬롯, 열=영업일·주야.
- * 색상 코딩 lib/molding/cell-style(T5.5). 드래그/툴팁은 T5.6/T5.9.
+ * 색상 코딩 lib/molding/cell-style(T5.5). onMove 제공 시 드래그 재배분(T5.6 J-MR-2).
  */
-export function ScheduleGrid({ model }: { model: GridModel }) {
+export function ScheduleGrid({
+  model,
+  onMove,
+}: {
+  model: GridModel;
+  onMove?: (scheduleId: string, target: MoveTargetCoord, expectedUpdatedAt: string) => void;
+}) {
   const cellByKey = new Map<string, GridCell>();
   for (const c of model.cells) cellByKey.set(`${c.rowKey}|${c.colKey}`, c);
+  const canDrag = !!onMove;
 
   return (
     <div className="flex flex-col gap-2">
@@ -46,9 +60,36 @@ export function ScheduleGrid({ model }: { model: GridModel }) {
                 {model.columns.map((col) => {
                   const cell = cellByKey.get(`${row.key}|${col.key}`);
                   return (
-                    <td key={col.key} className="border p-0.5">
+                    <td
+                      key={col.key}
+                      className="border p-0.5"
+                      onDragOver={canDrag ? (e) => e.preventDefault() : undefined}
+                      onDrop={
+                        canDrag
+                          ? (e) => {
+                              e.preventDefault();
+                              const id = e.dataTransfer.getData('scheduleId');
+                              const updatedAt = e.dataTransfer.getData('updatedAt');
+                              if (id && onMove) {
+                                onMove(id, { equipmentCode: row.equipmentCode, slot: row.slot, date: col.date, daynight: col.daynight }, updatedAt);
+                              }
+                            }
+                          : undefined
+                      }
+                    >
                       {cell && (
-                        <div className={`min-h-11 rounded px-1 py-1 text-center text-sm ${cellClass(cell.status, cell.ruleViolation)}`}>
+                        <div
+                          draggable={canDrag && !!cell.scheduleId}
+                          onDragStart={
+                            canDrag && cell.scheduleId
+                              ? (e) => {
+                                  e.dataTransfer.setData('scheduleId', cell.scheduleId as string);
+                                  e.dataTransfer.setData('updatedAt', cell.updatedAt ?? '');
+                                }
+                              : undefined
+                          }
+                          className={`min-h-11 rounded px-1 py-1 text-center text-sm ${canDrag ? 'cursor-move' : ''} ${cellClass(cell.status, cell.ruleViolation)}`}
+                        >
                           <div className="font-mono text-xs">
                             {cell.productCode} {statusBadge(cell.status)}
                           </div>

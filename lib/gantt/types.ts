@@ -28,6 +28,8 @@ export interface GridCell {
   rotations: number;
   status: MoldingStatus;
   ruleViolation: boolean;
+  scheduleId?: string;
+  updatedAt?: string;
 }
 
 export interface GridModel {

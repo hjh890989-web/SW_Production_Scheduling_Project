@@ -120,5 +120,15 @@ export async function loadWeekEntries(weekStartISO: string): Promise<ScheduleEnt
     rotations: r.rotations,
     status: r.status === 'MANUAL' ? 'MANUAL' : r.status === 'CONFIRMED' ? 'CONFIRMED' : 'AUTO',
     ruleViolation: r.ruleViolation,
+    scheduleId: r.id,
+    updatedAt: r.updatedAt.toISOString(),
   }));
+}
+
+/** 전 성형 장비의 LP/IC 슬롯 합집합 (드래그 룰 판정용). */
+export async function moldingSlotLists(): Promise<{ lpSlots: string[]; icSlots: string[] }> {
+  const equipment = await prisma.equipment.findMany({ where: { type: { in: ['MOLDING_LP', 'MOLDING_IC'] } } });
+  const lpSlots = [...new Set(equipment.filter((e) => e.type === 'MOLDING_LP').flatMap((e) => slotsOf(e.capacity)))];
+  const icSlots = [...new Set(equipment.filter((e) => e.type === 'MOLDING_IC').flatMap((e) => slotsOf(e.capacity)))];
+  return { lpSlots, icSlots };
 }
