@@ -13,13 +13,19 @@ CORE=아키텍처·보안·외부의존, MINOR=네이밍·UI·로그 포맷.
 - SQLite enum 미지원·기존 silicone 무결성 위해 `material`은 String 유지, `lib/material/`에서 union(silicone/EPDM/NBR)·정규화·검증.
 - 미상/빈값은 기본 silicone → 기존 데이터 영향 없음(AC T12.6.1-1). 스키마 변경 없어 db push 불필요.
 
+### CORE-2 (T12.5.1) PWA는 신규 의존성 없이 수동 구현
+- next-pwa/Workbox 미도입(사내망·신규 의존성 금지) → `public/manifest.webmanifest`+`public/sw.js`(stale-while-revalidate) 수동 작성, 클라이언트 등록.
+- 캐시/오프라인 판정은 `lib/pwa/strategy.ts` 순수 함수로 테스트, SW 자체는 빌드 산출물 정적 제공.
+
 ---
 
 ## MINOR
 
-(없음)
+### MINOR-1 (T12.5.2) 모바일 KSF는 별도 라우트 `/mobile` + 최신 2스냅샷 추세
+- 데스크톱 대시보드(W-1)와 분리된 모바일 우선 카드 뷰. KsfDailySnapshot 최신 2건으로 전일 대비 추세.
+- 포맷·추세 판정은 `lib/ksf/format.ts` 순수 함수로 테스트.
 
 ---
 
-CORE: 1
-MINOR: 0
+CORE: 2
+MINOR: 1
