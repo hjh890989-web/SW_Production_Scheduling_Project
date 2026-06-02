@@ -24,3 +24,5 @@ MINOR: 1
 - 압출 스케줄러 `lib/scheduler/extrusion-scheduler.ts`, 압출 도메인 `lib/extrusion/`(die-change·color 등), W-5 화면 `app/(dashboard)/extrusion/`. T6.5 부하 그래프는 Recharts 대신 **커스텀 SVG/바**(신규 의존성 0). 그리드/드래그는 Sprint 5(`lib/gantt`, `move-*`) 패턴 재사용.
 
 ---
+
+STOP REASON: ALL_PRS_DONE (T6.1~T6.7 7개 draft PR 모두 생성 — PR #58~#64)
