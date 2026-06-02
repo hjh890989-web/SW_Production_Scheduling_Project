@@ -90,9 +90,9 @@ export function ScheduleGrid({
                               : undefined
                           }
                           title={explainCell(cell)}
-                          className={`min-h-11 rounded px-1 py-1 text-center text-sm ${canDrag ? 'cursor-move' : ''} ${cellClass(cell.status, cell.ruleViolation)}`}
+                          className={`flex min-h-11 min-w-11 flex-col justify-center rounded px-1 py-1 text-center text-base ${canDrag ? 'cursor-move' : ''} ${cellClass(cell.status, cell.ruleViolation)}`}
                         >
-                          <div className="font-mono text-xs">
+                          <div className="font-mono text-sm">
                             {cell.productCode} {statusBadge(cell.status)}
                           </div>
                           <div>{cell.rotations}회</div>
