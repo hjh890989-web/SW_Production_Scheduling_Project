@@ -27,5 +27,11 @@ CORE=아키텍처·보안·외부의존, MINOR=네이밍·UI·로그 포맷.
 
 ---
 
-CORE: 2
+### CORE-3 (T12.1.3) 솔버 엔진은 추상화 + Mock 귀결 (Python OR-Tools 미가동)
+- `ISolverEngine` 인터페이스 + `SolverEngineMock` + 팩토리(env `SOLVER_URL`, timeout 30s, zod 응답 스키마).
+- 실 OR-Tools 마이크로서비스(Phase 2, 12.1.1/2/4·12.2.x)는 미가동 → 실 HTTP 호출 코드 미작성, Mock 귀결. 후속 W-4/5 토글(12.3.1)이 본 추상화에 의존.
+
+---
+
+CORE: 3
 MINOR: 1
