@@ -2,6 +2,7 @@
 
 import type { ExtGridModel, ExtCell } from '@/lib/extrusion/grid';
 import { cellClass, statusBadge } from '@/lib/molding/cell-style';
+import { egroupColor, egroupLabel, EGROUP_LEGEND } from '@/lib/extrusion/egroup-color';
 
 export interface ExtMoveCoord {
   extruderCode: string;
@@ -25,7 +26,16 @@ export function ExtrusionGrid({
   const canDrag = !!onMove;
 
   return (
-    <div className="overflow-auto rounded-md border">
+    <div className="flex flex-col gap-2">
+      <ul className="flex flex-wrap gap-2 text-sm" aria-label="E그룹 범례">
+        {EGROUP_LEGEND.map((l) => (
+          <li key={l.label} className="flex items-center gap-1">
+            <span className={`inline-block h-4 w-5 rounded ${l.className}`} />
+            {l.label}
+          </li>
+        ))}
+      </ul>
+      <div className="overflow-auto rounded-md border">
       <table className="border-collapse text-base">
         <thead>
           <tr>
@@ -70,13 +80,13 @@ export function ExtrusionGrid({
                               }
                             : undefined
                         }
-                        title={`${cell.productCode} · ${cell.quantity} · E${cell.extrusionGroup ?? '?'}/${cell.headPin ?? '?'}`}
-                        className={`flex min-h-11 min-w-11 flex-col justify-center rounded px-1 py-1 text-center text-base ${canDrag ? 'cursor-move' : ''} ${cellClass(cell.status, cell.ruleViolation)}`}
+                        title={`${cell.productCode} · ${cell.quantity} · ${egroupLabel(cell.extrusionGroup)}/${cell.headPin ?? '?'}`}
+                        className={`flex min-h-11 min-w-11 flex-col justify-center rounded border-l-4 px-1 py-1 text-center text-base ${canDrag ? 'cursor-move' : ''} ${egroupColor(cell.extrusionGroup)} ${cell.status !== 'AUTO' ? cellClass(cell.status, cell.ruleViolation) : ''} ${cell.ruleViolation ? 'ring-2 ring-red-500' : ''}`}
                       >
                         <div className="font-mono text-sm">
                           {cell.productCode} {statusBadge(cell.status)}
                         </div>
-                        <div>{cell.quantity}</div>
+                        <div className="text-xs">{egroupLabel(cell.extrusionGroup)} · {cell.quantity}</div>
                       </div>
                     )}
                   </td>
@@ -86,6 +96,7 @@ export function ExtrusionGrid({
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }
