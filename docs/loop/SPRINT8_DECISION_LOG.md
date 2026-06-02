@@ -32,7 +32,13 @@ T8.1~T8.4 자동화 루프(`/goal`)의 명세 미확정 결정 기록. CORE=아�
 - 시계열 차트는 신규 의존성 없이 커스텀 SVG(라인)로 그린다(KSF-1 납기율).
 - AC EX-2-F1(디스크 부족) 대비: 서버 PDF를 쓰지 않으므로(CORE-2) 서버 임시파일·디스크 점유가 없어 디스크 부족 실패 경로 자체가 제거됨(클라이언트 인쇄). 결정 기록.
 
+### MINOR-4 (T8.4) E2E 분리 + vitest 통합 검증 병행
+- E2E(`tests/e2e/export.spec.ts`)는 `npm run test:e2e`로 분리(vitest 게이트 미포함, 단 typecheck 대상).
+- 5종 게이트(vitest)에 들어가는 형식·정확성 검증은 `lib/export/sprint8-integration.test.ts`로 별도 제공(시트명·셀 위치, 작업지시 그룹·합계, 분기 평균·delta).
+
 ---
 
 CORE: 2
-MINOR: 3
+MINOR: 4
+
+STOP REASON: ALL_PRS_DONE
