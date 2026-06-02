@@ -11,10 +11,12 @@ export function ExtrusionClient({
   weekStart,
   model,
   cellCount,
+  dieChange,
 }: {
   weekStart: string;
   model: ExtGridModel;
   cellCount: number;
+  dieChange?: { autoTotal: number; baselineTotal: number; reductionPct: number };
 }) {
   const router = useRouter();
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
@@ -47,6 +49,21 @@ export function ExtrusionClient({
         <p className={`mb-3 rounded-md p-3 text-sm ${msg.ok ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`} role="alert">
           {msg.text}
         </p>
+      )}
+
+      {dieChange && (
+        <div className="mb-3 flex flex-wrap items-center gap-4 rounded-md border p-3">
+          <div>
+            <p className="text-sm text-muted-foreground">다이/노즐 변경 (계획 기준, KSF-2)</p>
+            <p className="text-2xl font-bold">
+              {dieChange.autoTotal}회 <span className="text-base font-normal text-muted-foreground">vs 수기 {dieChange.baselineTotal}회</span>
+            </p>
+          </div>
+          <span className={`rounded px-3 py-1 text-base font-semibold ${dieChange.reductionPct >= 30 ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}`}>
+            {dieChange.reductionPct >= 0 ? '▼' : '▲'} {Math.abs(dieChange.reductionPct)}% {dieChange.reductionPct >= 30 ? '(목표 달성)' : ''}
+          </span>
+          <span className="text-xs text-muted-foreground">※ MES 실적 미연동 — 계획 기준 (Sprint 9 연동)</span>
+        </div>
       )}
 
       {model.rows.length === 0 ? (

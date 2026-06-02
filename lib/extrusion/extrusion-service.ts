@@ -8,9 +8,18 @@ import {
 import { generatePipeRequests, type ScheduleForPipe, type PipeRequestItem } from '@/lib/scheduler/pipe-request';
 import type { ExtEntryInput } from '@/lib/extrusion/grid';
 import type { Shift } from '@/lib/extrusion/die-change';
+import { dieChangeSummary, type DieChangeSummary } from '@/lib/extrusion/die-change-summary';
 
 function iso(d: Date): string {
   return d.toISOString().slice(0, 10);
+}
+
+/** 주간 다이/노즐 변경 요약 (T6.4 — KSF-2, 계획 기준). */
+export async function getWeekDieChange(weekStartISO: string): Promise<DieChangeSummary> {
+  const entries = await loadWeekExtrusion(weekStartISO);
+  return dieChangeSummary(
+    entries.map((e) => ({ extruderCode: e.extruderCode, date: e.date, shift: e.shift, extrusionGroup: e.extrusionGroup, headPin: e.headPin })),
+  );
 }
 
 const DEFAULT_SHIFT_CAPACITY = 1000;

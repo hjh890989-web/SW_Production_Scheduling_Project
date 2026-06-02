@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { prisma } from '@/lib/db';
 import { buildExtGrid } from '@/lib/extrusion/grid';
 import { weekMonday } from '@/lib/scheduler/molding-service';
-import { loadWeekExtrusion } from '@/lib/extrusion/extrusion-service';
+import { loadWeekExtrusion, getWeekDieChange } from '@/lib/extrusion/extrusion-service';
 import { ExtrusionClient } from './extrusion-client';
 
 export const metadata: Metadata = { title: '압출 스케줄 W-5 · EVS' };
@@ -17,10 +17,11 @@ export default async function ExtrusionPage({ searchParams }: { searchParams: { 
   const weekEnd = new Date(weekStartDate);
   weekEnd.setUTCDate(weekEnd.getUTCDate() + 6);
 
-  const [extruders, calendar, entries] = await Promise.all([
+  const [extruders, calendar, entries, dieChange] = await Promise.all([
     prisma.equipment.findMany({ where: { type: 'EXTRUSION' }, orderBy: { code: 'asc' } }),
     prisma.calendarDay.findMany({ where: { isWorkday: true, date: { gte: weekStartDate, lte: weekEnd } }, orderBy: { date: 'asc' } }),
     loadWeekExtrusion(weekStart),
+    getWeekDieChange(weekStart),
   ]);
 
   const model = buildExtGrid(
@@ -29,5 +30,12 @@ export default async function ExtrusionPage({ searchParams }: { searchParams: { 
     entries,
   );
 
-  return <ExtrusionClient weekStart={weekStart} model={model} cellCount={entries.length} />;
+  return (
+    <ExtrusionClient
+      weekStart={weekStart}
+      model={model}
+      cellCount={entries.length}
+      dieChange={{ autoTotal: dieChange.autoTotal, baselineTotal: dieChange.baselineTotal, reductionPct: Math.round(dieChange.reductionPct) }}
+    />
+  );
 }
