@@ -23,7 +23,11 @@ T10.1~T10.4 자동화 루프(`/goal`)의 명세 미확정 결정 기록. CORE=�
 - 동기화 엔드포인트는 내부/cron 호출 — `x-erp-api-key`(env `ERP_API_KEY`) 인증, 빈 env면 401.
 - ERP 다운 시 503 + `erp_sync_failed` audit + Admin Notification(다음 cron 재시도).
 
+### MINOR-3 (T10.3) 야간 cron은 UTC 환산 + 통합 등록 엔트리
+- node-cron은 서버 TZ 기준이라 03:00 KST를 `0 18 * * *`(UTC)로 고정. `kstHourToUtcCron` 순수 함수로 환산·테스트.
+- `registerScheduledJobs()`로 KSF(T4.4)·MES(T9.5)·ERP를 한 곳에서 등록(빌드/테스트 시 미실행). 기존 cron 함수는 재사용만(수정 없음).
+
 ---
 
 CORE: 1
-MINOR: 2
+MINOR: 3
