@@ -44,5 +44,13 @@ T9.1~T9.6 자동화 루프(`/goal`)의 명세 미확정 결정 기록. CORE=아�
 
 ---
 
+### MINOR-6 (T9.6) 통합 테스트는 IMesClient Mock 변형 시뮬레이션 + E2E 인증 계약
+- 정상/timeout/다운을 `NormalMock`/`TimeoutMock`/`DownMock`으로 구동, 재시도 수명주기·연속실패 알림·재고 누적을 vitest 게이트 내에서 검증(DB 부수효과는 service/route 책임, 외부 호출 0).
+- `tests/e2e/mes.spec.ts`는 `/api/mes/result` 인증(401)·검증(422) 계약을 확인(`npm run test:e2e` 분리, MES_API_KEY 미설정 시 일부 skip).
+
+---
+
 CORE: 2
-MINOR: 5
+MINOR: 6
+
+STOP REASON: ALL_PRS_DONE
