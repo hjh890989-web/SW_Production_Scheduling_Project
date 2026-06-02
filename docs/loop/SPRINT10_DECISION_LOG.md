@@ -18,7 +18,12 @@ T10.1~T10.4 자동화 루프(`/goal`)의 명세 미확정 결정 기록. CORE=�
 ### MINOR-1 (T10.1) ERP는 Item 마스터의 읽기 소스 — 역기입 금지
 - 동기화 방향은 ERP→Item 단방향(품번·고객사코드·화성코드·소재). ERP/Mock 테이블 역기입 없음(CON-02).
 
+### MINOR-2 (T10.2) 변경분만 upsert + API key 인증(`x-erp-api-key`)
+- `computeItemChanges`로 달라진 필드만 update, 동일하면 쓰기 생략(불필요 audit·쓰기 방지). 신규는 create(material 기본 silicone).
+- 동기화 엔드포인트는 내부/cron 호출 — `x-erp-api-key`(env `ERP_API_KEY`) 인증, 빈 env면 401.
+- ERP 다운 시 503 + `erp_sync_failed` audit + Admin Notification(다음 cron 재시도).
+
 ---
 
 CORE: 1
-MINOR: 1
+MINOR: 2
