@@ -125,6 +125,14 @@ model Notification {
   @@index([type, createdAt])
 }
 
+model KsfDailySnapshot {
+  date            DateTime @id // 일자(UTC 자정)
+  ksf1Punctuality Float? // 납기율 (ProductionResult 기반, Sprint 6+)
+  ksf5Unification Float? // 수주 일원화율
+  ksf6Adoption    Float? // 수동보정 채택률 (J-MR-2, Sprint 5+)
+  createdAt       DateTime @default(now())
+}
+
 model User {
   id            String   @id @default(cuid())
   // 로그인 식별자는 사번/아이디(username) — 사내 공장 사용자 UX (CORE-4). email은 보조 연락처.
