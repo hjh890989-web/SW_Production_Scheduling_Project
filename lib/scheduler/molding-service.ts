@@ -7,6 +7,7 @@ import {
 } from '@/lib/scheduler/molding-scheduler';
 import { deriveSchedulerItem } from '@/lib/scheduler/slot-eligibility';
 import type { ScheduleEntryInput } from '@/lib/gantt/adapter';
+import { checkRuleViolations, type RuleViolation } from '@/lib/molding/rule-check';
 
 function iso(d: Date): string {
   return d.toISOString().slice(0, 10);
@@ -131,4 +132,27 @@ export async function moldingSlotLists(): Promise<{ lpSlots: string[]; icSlots: 
   const lpSlots = [...new Set(equipment.filter((e) => e.type === 'MOLDING_LP').flatMap((e) => slotsOf(e.capacity)))];
   const icSlots = [...new Set(equipment.filter((e) => e.type === 'MOLDING_IC').flatMap((e) => slotsOf(e.capacity)))];
   return { lpSlots, icSlots };
+}
+
+/** 주간 스케줄의 위치 제약(O/X) 위반 목록 (T5.7 — 경고용, 차단 아님). */
+export async function getWeekViolations(weekStartISO: string): Promise<RuleViolation[]> {
+  const [entries, { lpSlots, icSlots }] = await Promise.all([loadWeekEntries(weekStartISO), moldingSlotLists()]);
+  const itemIds = [...new Set(entries.map((e) => e.itemId))];
+  const items = await prisma.item.findMany({ where: { id: { in: itemIds } } });
+  const allowedByItem: Record<string, string[]> = {};
+  for (const it of items) {
+    const d = deriveSchedulerItem(it, lpSlots, icSlots);
+    if (d) allowedByItem[it.id] = d.allowedSlots;
+  }
+  return checkRuleViolations(
+    entries.map((e) => ({
+      scheduleId: e.scheduleId,
+      itemId: e.itemId,
+      productCode: e.productCode,
+      slot: e.slot,
+      equipmentCode: e.equipmentCode,
+      date: e.date,
+    })),
+    allowedByItem,
+  );
 }

@@ -12,10 +12,12 @@ export function MoldingClient({
   weekStart,
   model,
   cellCount,
+  violations = [],
 }: {
   weekStart: string;
   model: GridModel;
   cellCount: number;
+  violations?: string[];
 }) {
   const router = useRouter();
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
@@ -58,6 +60,17 @@ export function MoldingClient({
         <p className={`mb-3 rounded-md p-3 text-sm ${msg.ok ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`} role="alert">
           {msg.text}
         </p>
+      )}
+
+      {violations.length > 0 && (
+        <div className="mb-3 rounded-md border-2 border-red-300 bg-red-50 p-3 text-sm text-red-800" role="alert">
+          <p className="font-semibold">⚠️ 위치 제약(O/X) 위반 {violations.length}건 — 차단하지 않으며 확인이 필요합니다.</p>
+          <ul className="mt-1 max-h-32 list-disc overflow-y-auto pl-5">
+            {violations.map((v) => (
+              <li key={v}>{v}</li>
+            ))}
+          </ul>
+        </div>
       )}
 
       {model.rows.length === 0 ? (
