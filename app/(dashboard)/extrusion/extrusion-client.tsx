@@ -16,12 +16,16 @@ export function ExtrusionClient({
   cellCount,
   dieChange,
   load,
+  highlightKeys = [],
+  highlightItem,
 }: {
   weekStart: string;
   model: ExtGridModel;
   cellCount: number;
   dieChange?: { autoTotal: number; baselineTotal: number; reductionPct: number };
   load?: { days: DayLoad[]; extruderCodes: string[] };
+  highlightKeys?: string[];
+  highlightItem?: string;
 }) {
   const router = useRouter();
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
@@ -105,7 +109,14 @@ export function ExtrusionClient({
           압출기 시드가 필요합니다. (npx prisma db seed)
         </p>
       ) : (
-        <ExtrusionGrid model={model} onMove={onMove} />
+        <>
+          {highlightItem && (
+            <p className="mb-2 rounded-md bg-yellow-50 p-2 text-sm text-yellow-800" role="status">
+              영향 하이라이트: <b>{highlightItem}</b> — {highlightKeys.length}셀{highlightKeys.length > 50 ? ' (상위 50, 요약)' : ''}
+            </p>
+          )}
+          <ExtrusionGrid model={model} onMove={onMove} highlightKeys={highlightKeys.slice(0, 50)} />
+        </>
       )}
     </main>
   );

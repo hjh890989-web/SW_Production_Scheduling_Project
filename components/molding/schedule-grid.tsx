@@ -18,13 +18,16 @@ export interface MoveTargetCoord {
 export function ScheduleGrid({
   model,
   onMove,
+  highlightKeys,
 }: {
   model: GridModel;
   onMove?: (scheduleId: string, target: MoveTargetCoord, expectedUpdatedAt: string) => void;
+  highlightKeys?: string[];
 }) {
   const cellByKey = new Map<string, GridCell>();
   for (const c of model.cells) cellByKey.set(`${c.rowKey}|${c.colKey}`, c);
   const canDrag = !!onMove;
+  const highlight = new Set(highlightKeys ?? []);
 
   return (
     <div className="flex flex-col gap-2">
@@ -60,10 +63,11 @@ export function ScheduleGrid({
                 </th>
                 {model.columns.map((col) => {
                   const cell = cellByKey.get(`${row.key}|${col.key}`);
+                  const isHi = highlight.has(`${row.key}|${col.key}`);
                   return (
                     <td
                       key={col.key}
-                      className="border p-0.5"
+                      className={`border p-0.5 ${isHi ? 'bg-yellow-200 ring-2 ring-yellow-500' : ''}`}
                       onDragOver={canDrag ? (e) => e.preventDefault() : undefined}
                       onDrop={
                         canDrag

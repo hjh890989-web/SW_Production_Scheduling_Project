@@ -17,13 +17,16 @@ export interface ExtMoveCoord {
 export function ExtrusionGrid({
   model,
   onMove,
+  highlightKeys,
 }: {
   model: ExtGridModel;
   onMove?: (scheduleId: string, target: ExtMoveCoord, expectedUpdatedAt: string) => void;
+  highlightKeys?: string[];
 }) {
   const byKey = new Map<string, ExtCell>();
   for (const c of model.cells) byKey.set(`${c.rowKey}|${c.colKey}`, c);
   const canDrag = !!onMove;
+  const highlight = new Set(highlightKeys ?? []);
 
   return (
     <div className="flex flex-col gap-2">
@@ -53,10 +56,11 @@ export function ExtrusionGrid({
               <th className="sticky left-0 z-10 border bg-background px-3 py-2 text-left text-sm font-medium">{row.label}</th>
               {model.columns.map((col) => {
                 const cell = byKey.get(`${row.key}|${col.key}`);
+                const isHi = highlight.has(`${row.key}|${col.key}`);
                 return (
                   <td
                     key={col.key}
-                    className="border p-0.5"
+                    className={`border p-0.5 ${isHi ? 'bg-yellow-200 ring-2 ring-yellow-500' : ''}`}
                     onDragOver={canDrag ? (e) => e.preventDefault() : undefined}
                     onDrop={
                       canDrag

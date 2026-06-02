@@ -1,0 +1,61 @@
+'use client';
+
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { simulateOrderChangeImpact, type ImpactPanelResult } from '@/lib/impact/impact-actions';
+import { severityStyle, severityLabel } from '@/lib/impact/severity-style';
+
+/**
+ * W-3 영향 시뮬 패널 (T7.2 — AC PM-1-1). 품번 입력 시 debounce 500ms로 시뮬.
+ */
+export function ImpactPanel({ productCode, changeType }: { productCode?: string; changeType?: string }) {
+  const [result, setResult] = useState<ImpactPanelResult | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const code = (productCode ?? '').trim();
+    if (code.length < 3) {
+      setResult(null);
+      return;
+    }
+    setLoading(true);
+    const t = setTimeout(async () => {
+      const r = await simulateOrderChangeImpact(code, changeType ?? '수량');
+      setResult(r);
+      setLoading(false);
+    }, 500);
+    return () => clearTimeout(t);
+  }, [productCode, changeType]);
+
+  if (loading) {
+    return <div className="mt-2 h-20 animate-pulse rounded-md border bg-muted/40" aria-label="시뮬레이션 중" />;
+  }
+  if (!result) return null;
+  if (!result.ok) {
+    return <p className="mt-2 rounded-md bg-amber-50 p-2 text-sm text-amber-800">{result.message}</p>;
+  }
+
+  const counts = result.counts ?? { critical: 0, warning: 0, auto: 0, unknown: 0 };
+  return (
+    <div className="mt-2 rounded-md border p-3">
+      <p className="text-sm font-semibold">영향 시뮬레이션: 진행/예정 {result.total}건</p>
+      <ul className="mt-1 flex flex-wrap gap-2 text-sm">
+        <li className={`rounded border px-2 py-0.5 ${severityStyle('critical')}`}>{severityLabel('critical')} {counts.critical}</li>
+        <li className={`rounded border px-2 py-0.5 ${severityStyle('warning')}`}>{severityLabel('warning')} {counts.warning}</li>
+        <li className={`rounded border px-2 py-0.5 ${severityStyle('auto')}`}>{severityLabel('auto')} {counts.auto}</li>
+      </ul>
+      {result.degraded && <p className="mt-1 text-xs text-amber-700">⚠️ Degraded Mode — DB 기준(MES 미연동)</p>}
+      {result.total === 0 && <p className="mt-1 text-sm text-muted-foreground">영향받는 스케줄이 없습니다(또는 아직 스케줄 미생성).</p>}
+      {(result.total ?? 0) > 0 && productCode && (
+        <div className="mt-2 flex gap-3 text-sm">
+          <Link href={`/molding?highlightItem=${encodeURIComponent(productCode)}`} className="text-primary underline">
+            W-4 성형에서 보기 →
+          </Link>
+          <Link href={`/extrusion?highlightItem=${encodeURIComponent(productCode)}`} className="text-primary underline">
+            W-5 압출에서 보기 →
+          </Link>
+        </div>
+      )}
+    </div>
+  );
+}
