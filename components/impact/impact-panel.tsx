@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { simulateOrderChangeImpact, type ImpactPanelResult } from '@/lib/impact/impact-actions';
 import { severityStyle, severityLabel } from '@/lib/impact/severity-style';
@@ -45,6 +46,16 @@ export function ImpactPanel({ productCode, changeType }: { productCode?: string;
       </ul>
       {result.degraded && <p className="mt-1 text-xs text-amber-700">⚠️ Degraded Mode — DB 기준(MES 미연동)</p>}
       {result.total === 0 && <p className="mt-1 text-sm text-muted-foreground">영향받는 스케줄이 없습니다(또는 아직 스케줄 미생성).</p>}
+      {(result.total ?? 0) > 0 && productCode && (
+        <div className="mt-2 flex gap-3 text-sm">
+          <Link href={`/molding?highlightItem=${encodeURIComponent(productCode)}`} className="text-primary underline">
+            W-4 성형에서 보기 →
+          </Link>
+          <Link href={`/extrusion?highlightItem=${encodeURIComponent(productCode)}`} className="text-primary underline">
+            W-5 압출에서 보기 →
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

@@ -3,12 +3,13 @@ import { prisma } from '@/lib/db';
 import { buildExtGrid } from '@/lib/extrusion/grid';
 import { weekMonday } from '@/lib/scheduler/molding-service';
 import { loadWeekExtrusion, getWeekDieChange, getWeekLoadBalance } from '@/lib/extrusion/extrusion-service';
+import { matchedCellKeys } from '@/lib/impact/highlight';
 import { ExtrusionClient } from './extrusion-client';
 
 export const metadata: Metadata = { title: '압출 스케줄 W-5 · EVS' };
 export const dynamic = 'force-dynamic';
 
-export default async function ExtrusionPage({ searchParams }: { searchParams: { week?: string } }) {
+export default async function ExtrusionPage({ searchParams }: { searchParams: { week?: string; highlightItem?: string } }) {
   const weekStart = searchParams.week && /^\d{4}-\d{2}-\d{2}$/.test(searchParams.week)
     ? weekMonday(searchParams.week)
     : weekMonday('2026-05-18');
@@ -38,6 +39,8 @@ export default async function ExtrusionPage({ searchParams }: { searchParams: { 
       cellCount={entries.length}
       dieChange={{ autoTotal: dieChange.autoTotal, baselineTotal: dieChange.baselineTotal, reductionPct: Math.round(dieChange.reductionPct) }}
       load={load}
+      highlightKeys={searchParams.highlightItem ? matchedCellKeys(model.cells, searchParams.highlightItem) : []}
+      highlightItem={searchParams.highlightItem}
     />
   );
 }

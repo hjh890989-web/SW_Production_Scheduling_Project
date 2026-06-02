@@ -15,12 +15,16 @@ export function MoldingClient({
   cellCount,
   violations = [],
   summary,
+  highlightKeys = [],
+  highlightItem,
 }: {
   weekStart: string;
   model: GridModel;
   cellCount: number;
   violations?: string[];
   summary?: StatusSummary;
+  highlightKeys?: string[];
+  highlightItem?: string;
 }) {
   const router = useRouter();
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
@@ -92,7 +96,14 @@ export function MoldingClient({
           성형 장비 시드가 필요합니다. (npx prisma db seed)
         </p>
       ) : (
-        <ScheduleGrid model={model} onMove={onMove} />
+        <>
+          {highlightItem && (
+            <p className="mb-2 rounded-md bg-yellow-50 p-2 text-sm text-yellow-800" role="status">
+              영향 하이라이트: <b>{highlightItem}</b> — {highlightKeys.length}셀 표시{highlightKeys.length > 50 ? ' (상위 50, 요약)' : ''}
+            </p>
+          )}
+          <ScheduleGrid model={model} onMove={onMove} highlightKeys={highlightKeys.slice(0, 50)} />
+        </>
       )}
     </main>
   );

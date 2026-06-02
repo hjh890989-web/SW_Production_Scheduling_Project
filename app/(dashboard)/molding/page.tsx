@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { buildColumns, buildRows, buildCells, type CalendarInput, type EquipmentInput } from '@/lib/gantt/adapter';
 import { weekMonday, loadWeekEntries, getWeekViolations } from '@/lib/scheduler/molding-service';
 import { summarizeStatus } from '@/lib/molding/status-summary';
+import { matchedCellKeys } from '@/lib/impact/highlight';
 import { MoldingClient } from './molding-client';
 
 export const metadata: Metadata = { title: '성형 스케줄 W-4 · EVS' };
@@ -12,7 +13,7 @@ function slotsOf(capacity: unknown): string[] {
   return ((capacity ?? {}) as { slots?: string[] }).slots ?? [];
 }
 
-export default async function MoldingPage({ searchParams }: { searchParams: { week?: string } }) {
+export default async function MoldingPage({ searchParams }: { searchParams: { week?: string; highlightItem?: string } }) {
   const weekStart = searchParams.week && /^\d{4}-\d{2}-\d{2}$/.test(searchParams.week)
     ? weekMonday(searchParams.week)
     : weekMonday('2026-05-18');
@@ -39,8 +40,17 @@ export default async function MoldingPage({ searchParams }: { searchParams: { we
 
   const violationLabels = violations.map((v) => `${v.productCode} @ ${v.equipmentCode}/${v.slot} (${v.date})`);
   const summary = summarizeStatus(model.cells);
+  const highlightKeys = searchParams.highlightItem ? matchedCellKeys(model.cells, searchParams.highlightItem) : [];
 
   return (
-    <MoldingClient weekStart={weekStart} model={model} cellCount={entries.length} violations={violationLabels} summary={summary} />
+    <MoldingClient
+      weekStart={weekStart}
+      model={model}
+      cellCount={entries.length}
+      violations={violationLabels}
+      summary={summary}
+      highlightKeys={highlightKeys}
+      highlightItem={searchParams.highlightItem}
+    />
   );
 }
