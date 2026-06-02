@@ -29,5 +29,13 @@ CORE=아키텍처·보안·외부의존, MINOR=네이밍·UI·로그 포맷.
 
 ---
 
+### MINOR-3 (T11.OPS) 인프라 6 task는 `docs/operations.md` 단일 런북으로 산출
+- T11.2(k6)·T11.4(Lighthouse)·T11.5(Sentry)·T11.6(Grafana)·T11.7(배포)·T11.8(백업/복구/아카이빙)을 구체 명령·compose/nginx/k6/lhci 스니펫·임계치·검증 절차와 함께 1개 문서로 정리.
+- 실행·신규 의존성·CI 변경은 사내 서버 적용 단계에서 별도 수행(본 루프는 문서 산출까지).
+
+---
+
 CORE: 1
-MINOR: 2
+MINOR: 3
+
+STOP REASON: ALL_PRS_DONE
