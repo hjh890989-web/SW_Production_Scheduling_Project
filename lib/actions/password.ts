@@ -42,7 +42,8 @@ export async function changePassword(
   const passwordHash = await hashPassword(newPassword);
   await prisma.user.update({
     where: { id: user.id },
-    data: { passwordHash, passwordChangedAt: new Date() },
+    // SEC: 비밀번호 변경 시 sessionVersion 증가 → 이전 발급 JWT 전부 무효화
+    data: { passwordHash, passwordChangedAt: new Date(), sessionVersion: { increment: 1 } },
   });
 
   await logAudit({

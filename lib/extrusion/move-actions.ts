@@ -49,10 +49,14 @@ export async function moveExtrusionSchedule(
   const { ruleViolation } = evaluateExtMove(target.extruderCode, sched.item);
   const before = { extruderCode: sched.extruder.code, shift: sched.shift, date: sched.date.toISOString().slice(0, 10), status: sched.status };
 
-  await prisma.extrusionSchedule.update({
-    where: { id: scheduleId },
+  // 낙관적 락 DB 원자 강제(SEC: TOCTOU lost update 방지)
+  const moved = await prisma.extrusionSchedule.updateMany({
+    where: { id: scheduleId, updatedAt: sched.updatedAt },
     data: { extruderId: targetEq.id, shift: target.shift, date: new Date(`${target.date}T00:00:00.000Z`), status: 'MANUAL', ruleViolation },
   });
+  if (moved.count === 0) {
+    return { ok: false, conflict: true, message: '이 셀이 방금 변경되었습니다 — 새로고침 후 다시 시도하세요.' };
+  }
 
   await logAudit({
     userId: session?.user?.id ?? null,

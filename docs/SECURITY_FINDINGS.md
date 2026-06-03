@@ -30,12 +30,25 @@
 
 ---
 
+## ✅ 추가 수정 (2차 — 앱 구동 런타임 검증 포함)
+
+이연 항목 중 **앱 구동 검증이 필요했던 HIGH 2건**을 dev 서버 기동 후 실제로 검증하며 적용.
+
+| 심각도 | 위치 | 수정 | 런타임 검증 |
+|---|---|---|---|
+| **HIGH** | 낙관적 락 5 call sites(`move-actions`·`extrusion/move-actions`·`equipment-actions`×2·`item-actions`) | JS TOCTOU 비교 → **DB 원자 CAS**(`updateMany({where:{id, updatedAt}})`, `count===0`→충돌) | 5종 게이트 통과 + dev 기동 시 스케줄/마스터 페이지 정상 렌더(해피패스). 충돌 경로는 DB count 기반(결정적) |
+| **HIGH** | `auth.ts`·`auth.config`(types)·`lib/actions/password.ts` | **sessionVersion 집행** — 비번 변경 시 `sessionVersion` 증가, Node jwt 콜백에서 DB값과 비교해 무효화(fail-open). 판정은 `lib/auth/session-revocation.ts` 순수+테스트 | **dev 기동 검증**: 로그인 정상(매 요청 DB조회 추가가 인증 안 깸) → DB sessionVersion 증가 → **구 토큰 role·name 즉시 소거(무효화)** → 복원 시 재유효 확인 |
+
+> ⚠️ **sessionVersion 잔여 한계**: 미들웨어(Edge)는 Prisma 불가라 DB 비교 미적용 → **페이지 열람** 차단은 Node 레이어(페이지 렌더·서버액션 권한)에서만 강제(변경/권한작업은 차단됨, 빈 익명 세션). 미들웨어 레벨 차단까지 원하면 DB 세션 전략 또는 내부 Node API 경유 검증으로 후속 확장 권장.
+
+검증: 5종 게이트(test 361 / lint 0 / typecheck 0 / prisma valid / build 0). 신규 npm 의존성 0.
+
+---
+
 ## ⏸️ 이연 (런타임 검증·제품 결정 필요 — 별도 PR 권장)
 
 | 심각도 | 위치 | 문제 | 권장 수정 | 이연 사유 |
 |---|---|---|---|---|
-| **HIGH** | `auth.config.ts` / `lib/actions/password.ts` | `User.sessionVersion` 정의되나 **미집행** — 비밀번호 변경 후에도 기존 JWT 유효(세션 무효화 규칙 위배) | 비번 변경 시 `sessionVersion` 증가 + jwt/session 콜백에서 DB 값과 비교(Edge/Node 분리 주의) | 콜백이 Edge(미들웨어) 공유 — 매 요청 DB조회 추가가 인증 흐름에 영향, 앱 구동 검증 필요 |
-| **HIGH** | `lib/scheduler/move-rules.ts` + 6 call sites | 낙관적 락이 JS TOCTOU 비교 → lost update 가능(⭐T5.6 J-MR-2 포함) | `update({where:{id, updatedAt: expected}})`로 DB CAS, P2025를 충돌로 처리 | 6개 액션 일괄 변경 + 충돌 UX 회귀 검증 필요(앱 구동) |
 | **HIGH** | `app/api/mes/result/route.ts:60-62`, `sync-service.ts:47-48` | ProductionResult create + 재고 갱신 비원자 → 부분 실패 시 재고 누락(멱등 skip이 영구화). #6/#7로 경합·롤백은 완화했으나 **두 쓰기의 원자성**은 미해결 | 두 쓰기를 단일 `$transaction`(tx 공유)로 묶기 | 트랜잭션 중첩·`headers()`/audit 상호작용 런타임 검증 필요 |
 | **HIGH** | `lib/security/headers.js` | `script-src 'unsafe-inline'`이 CSP의 XSS 방어를 무력화 | 미들웨어 per-request nonce + `'strict-dynamic'`, `'unsafe-inline'` 제거 | Next App Router nonce 적용은 앱 구동 회귀 검증 필수(렌더 깨짐 위험) |
 | **MED** | `lib/orders/upload.ts` | 동일 파일 재업로드 시 ACTIVE 주문 **중복 적재**(supersede/dedup 없음) | 자연키 `@@unique` 또는 업로드 트랜잭션 내 기존 ACTIVE supersede | supersede 범위(품번/소스/전체)는 **제품 결정** 필요 |

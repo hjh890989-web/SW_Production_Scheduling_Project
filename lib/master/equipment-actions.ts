@@ -35,7 +35,10 @@ export async function toggleEquipmentActive(
   }
 
   const next = !eq.isActive;
-  await prisma.equipment.update({ where: { id }, data: { isActive: next } });
+  const toggled = await prisma.equipment.updateMany({ where: { id, updatedAt: eq.updatedAt }, data: { isActive: next } });
+  if (toggled.count === 0) {
+    return { ok: false, conflict: true, message: '다른 사용자가 먼저 수정했습니다. 새로고침 후 다시 시도하세요.' };
+  }
   await logAudit({
     userId: actor.userId,
     userRole: actor.role,
@@ -67,7 +70,10 @@ export async function updateEquipmentName(
     return { ok: false, conflict: true, message: '다른 사용자가 먼저 수정했습니다. 새로고침 후 다시 시도하세요.' };
   }
 
-  await prisma.equipment.update({ where: { id }, data: { name: trimmed } });
+  const renamed = await prisma.equipment.updateMany({ where: { id, updatedAt: eq.updatedAt }, data: { name: trimmed } });
+  if (renamed.count === 0) {
+    return { ok: false, conflict: true, message: '다른 사용자가 먼저 수정했습니다. 새로고침 후 다시 시도하세요.' };
+  }
   await logAudit({
     userId: actor.userId,
     userRole: actor.role,
