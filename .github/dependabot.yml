@@ -1,0 +1,16 @@
+# T11.3 — 의존성 자동 업데이트 PR(주 1회). 신규 취약점 1주 내 패치 경로(AC T11.3-F1).
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: '/'
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # 보안 패치는 묶어서 한 PR로(리뷰 부담 완화)
+      security-and-minor:
+        update-types: ['minor', 'patch']
+  - package-ecosystem: github-actions
+    directory: '/'
+    schedule:
+      interval: weekly
