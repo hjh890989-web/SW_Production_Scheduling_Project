@@ -66,8 +66,9 @@ export async function moveMoldingSchedule(
     status: sched.status,
   };
 
-  await prisma.moldingSchedule.update({
-    where: { id: scheduleId },
+  // 낙관적 락을 DB에서 원자적으로 강제(SEC: TOCTOU lost update 방지) — updatedAt 일치 행만 갱신
+  const moved = await prisma.moldingSchedule.updateMany({
+    where: { id: scheduleId, updatedAt: sched.updatedAt },
     data: {
       equipmentId: targetEq.id,
       slotPosition: target.slot,
@@ -77,6 +78,9 @@ export async function moveMoldingSchedule(
       ruleViolation,
     },
   });
+  if (moved.count === 0) {
+    return { ok: false, conflict: true, message: '이 슬롯이 방금 변경되었습니다 — 새로고침 후 다시 시도하세요.' };
+  }
 
   await logAudit({
     userId: session?.user?.id ?? null,

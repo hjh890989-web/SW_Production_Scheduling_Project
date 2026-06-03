@@ -63,7 +63,11 @@ export async function updateItemField(
   }
 
   const before = (current as Record<string, unknown>)[field];
-  await prisma.item.update({ where: { id }, data: { [field]: value } });
+  // 낙관적 락 DB 원자 강제(SEC: TOCTOU lost update 방지)
+  const updated = await prisma.item.updateMany({ where: { id, updatedAt: current.updatedAt }, data: { [field]: value } });
+  if (updated.count === 0) {
+    return { ok: false, conflict: true, message: '다른 사용자가 먼저 수정했습니다. 새로고침 후 다시 시도하세요.' };
+  }
 
   await logAudit({
     userId: session?.user?.id ?? null,

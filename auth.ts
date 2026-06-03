@@ -4,6 +4,7 @@ import { authConfig, type Role } from '@/auth.config';
 import { prisma } from '@/lib/db';
 import { verifyPassword } from '@/lib/auth/password';
 import { isLocked, registerFailure } from '@/lib/auth/lockout';
+import { isSessionRevoked } from '@/lib/auth/session-revocation';
 import { logAudit } from '@/lib/audit';
 
 export { ROLES } from '@/auth.config';
@@ -82,8 +83,38 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           email: user.email,
           name: user.name,
           role: user.role as Role,
+          sessionVersion: user.sessionVersion,
         };
       },
     }),
   ],
+  callbacks: {
+    ...authConfig.callbacks,
+    // Node 전용 jwt: 로그인 시 sessionVersion 저장 + 후속 요청마다 DB값과 비교해 무효화(SEC).
+    // 미들웨어(Edge)는 authConfig.callbacks를 쓰므로 미적용 — 페이지/서버액션(Node)에서 강제된다.
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id as string;
+        token.role = (user as { role?: Role }).role;
+        token.sv = (user as { sessionVersion?: number }).sessionVersion ?? 0;
+        return token;
+      }
+      const tokenId = token.id as string | undefined;
+      if (tokenId) {
+        try {
+          const u = await prisma.user.findUnique({
+            where: { id: tokenId },
+            select: { sessionVersion: true },
+          });
+          if (isSessionRevoked(token.sv as number | undefined, u?.sessionVersion)) {
+            // 무효화: 신원·표시정보 제거 → 권한 없는 익명 세션이 되어 보호 자원 접근/변경 차단
+            return { ...token, id: '', role: undefined, name: null, email: null, sv: -1 };
+          }
+        } catch {
+          // SEC: DB 오류 시 fail-open(전체 잠금 방지) — 다음 요청에서 재검증
+        }
+      }
+      return token;
+    },
+  },
 });
