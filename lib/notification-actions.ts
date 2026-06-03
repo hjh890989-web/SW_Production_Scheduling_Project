@@ -4,28 +4,13 @@ import { revalidatePath } from 'next/cache';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/db';
 
-export interface NotifyInput {
-  targetUserId?: string | null;
-  type: string;
-  title: string;
-  message: string;
-  link?: string;
-}
+// 알림 생성은 내부 모듈 lib/notify.ts(createNotification)로 이전 — 무인증 액션 노출 차단(SEC).
 
-/** 알림 생성 (T4.3 — title/link는 payload, CORE-1). */
-export async function notify(input: NotifyInput) {
-  return prisma.notification.create({
-    data: {
-      type: input.type,
-      message: input.message,
-      payload: { title: input.title, link: input.link ?? null },
-      targetUserId: input.targetUserId ?? null,
-    },
-  });
-}
-
-/** 미확인 알림 수 (본인 대상 + 브로드캐스트). */
-export async function getUnreadCount(userId: string): Promise<number> {
+/** 미확인 알림 수 (본인 대상 + 브로드캐스트). userId는 세션에서 파생(SEC: IDOR 방지). */
+export async function getUnreadCount(): Promise<number> {
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) return 0;
   return prisma.notification.count({
     where: { OR: [{ targetUserId: userId }, { targetUserId: null }], read: false, cancelled: false },
   });
@@ -41,8 +26,11 @@ export interface NotificationView {
   createdAt: string;
 }
 
-/** 본인 대상 + 브로드캐스트 알림 목록(최근 20건). */
-export async function getNotifications(userId: string): Promise<NotificationView[]> {
+/** 본인 대상 + 브로드캐스트 알림 목록(최근 20건). userId는 세션에서 파생(SEC: IDOR 방지). */
+export async function getNotifications(): Promise<NotificationView[]> {
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) return [];
   const list = await prisma.notification.findMany({
     where: { OR: [{ targetUserId: userId }, { targetUserId: null }], cancelled: false },
     orderBy: { createdAt: 'desc' },

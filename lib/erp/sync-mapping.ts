@@ -1,3 +1,4 @@
+import { createHash, timingSafeEqual } from 'crypto';
 import type { ErpItemRecord } from './types';
 
 /**
@@ -10,10 +11,12 @@ export interface ExistingItem {
   material: string;
 }
 
-/** API key 비교(빈 env면 항상 실패). */
+/** API key 상수시간 비교(SEC: 타이밍 사이드채널 방지). 빈 env/미제공이면 항상 실패. */
 export function erpApiKeyOk(provided: string | null | undefined, expected: string | undefined): boolean {
-  if (!expected) return false;
-  return provided === expected;
+  if (!expected || !provided) return false;
+  const a = createHash('sha256').update(provided).digest();
+  const b = createHash('sha256').update(expected).digest();
+  return timingSafeEqual(a, b);
 }
 
 /** 신규 Item 생성 데이터. material 미제공 시 기본 silicone. */

@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/db';
 import { logAudit } from '@/lib/audit';
-import { notify } from '@/lib/notification-actions';
+import { createNotification } from '@/lib/notify';
 import { createErpClient } from './factory';
 import { toCreateData, computeItemChanges, summarize, type SyncSummary } from './sync-mapping';
 import type { IErpClient } from './IErpClient';
@@ -23,7 +23,7 @@ export async function runErpSync(client: IErpClient = createErpClient()): Promis
   } catch (err) {
     const error = err instanceof Error ? err.message : 'unknown';
     await logAudit({ action: 'erp_sync_failed', table: 'Item', reason: error });
-    await notify({
+    await createNotification({
       type: 'ERP_SYNC_FAILED',
       title: '영림원 ERP 동기화 실패',
       message: `ERP 동기화에 실패했습니다(${error}). 다음 동기화에서 재시도합니다.`,

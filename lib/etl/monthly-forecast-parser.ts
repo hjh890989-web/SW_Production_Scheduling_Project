@@ -1,4 +1,4 @@
-import { type CellValue, toNumber } from '@/lib/etl/excel';
+import { type CellValue, toQuantity } from '@/lib/etl/excel';
 import type { Confidence, ParseResult, ParsedOrderRow } from '@/lib/orders/types';
 
 /** 기본 연도: 헤더 일자가 'M/D(요일)' 형식이라 연도 정보가 없어 파라미터로 받는다(기본 2026). */
@@ -19,12 +19,15 @@ export function mapConfidence(source: string): { confidence: Confidence; warning
   return { confidence: 'MIXED', warning: `미정의 출처 값 "${source}" → MIXED fallback` };
 }
 
-/** 'M/D(요일)' → 'YYYY-MM-DD'. 매칭 실패 시 null. */
+/** 'M/D(요일)' → 'YYYY-MM-DD'. 매칭 실패·달력상 무효(예: 2/30) 시 null(SEC). */
 function headerToISO(cell: CellValue, year: number): string | null {
   if (typeof cell !== 'string') return null;
   const m = cell.match(/(\d{1,2})\s*\/\s*(\d{1,2})/);
   if (!m) return null;
-  return `${year}-${m[1].padStart(2, '0')}-${m[2].padStart(2, '0')}`;
+  const iso = `${year}-${m[1].padStart(2, '0')}-${m[2].padStart(2, '0')}`;
+  const d = new Date(`${iso}T00:00:00.000Z`);
+  // 롤오버(2/30→3/2) 없이 정확히 동일한 일자만 유효
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === iso ? iso : null;
 }
 
 /**
@@ -61,8 +64,8 @@ export function parseMonthlyForecast(matrix: CellValue[][], year: number = DEFAU
     const orderType = String(row[typeCol] ?? '').toUpperCase().includes('KD') ? 'KD' : 'OEM';
 
     for (const { i, iso } of dateCols) {
-      const qty = toNumber(row[i]);
-      if (!qty || qty <= 0) continue;
+      const qty = toQuantity(row[i]);
+      if (qty === null) continue; // SEC: 정수 수량 보장
       rows.push({ rawProductCode, deliveryDate: iso, quantity: qty, sourceType: 'monthly_forecast', confidence, orderType });
     }
   }

@@ -1,7 +1,7 @@
 import cron from 'node-cron';
 import { prisma } from '@/lib/db';
 import { logAudit } from '@/lib/audit';
-import { notify } from '@/lib/notification-actions';
+import { createNotification } from '@/lib/notify';
 import { createMesClient } from './factory';
 import { toProductionResultData } from './result-mapping';
 import { applyInventoryChange } from '@/lib/inventory/inventory-service';
@@ -79,7 +79,7 @@ export async function processRetryQueue(client: IMesClient = createMesClient(), 
     } else {
       await prisma.mesRetryQueue.update({ where: { id: item.id }, data: { status: 'FAILED', attempts, lastError: result.error } });
       if (shouldAlert(attempts - item.maxAttempts + 1)) {
-        await notify({
+        await createNotification({
           type: 'MES_SEND_FAILED',
           title: 'MES 작업지시 송신 연속 실패',
           message: `작업지시 ${item.instructionId} 송신이 ${attempts}회 실패했습니다. 생산관리 확인이 필요합니다.`,

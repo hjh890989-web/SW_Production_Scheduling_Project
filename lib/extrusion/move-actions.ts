@@ -69,13 +69,13 @@ export async function moveExtrusionSchedule(
   return { ok: true, ruleViolation, message: ruleViolation ? '배치되었습니다. ⚠️ 압출기 비호환 — 확인하세요.' : '배치되었습니다(수동).' };
 }
 
-/** 주간 압출 스케줄 확정 (T6.6 — AC ER-2-3). MANUAL/AUTO → CONFIRMED. extrusion:write. */
+/** 주간 압출 스케줄 확정 (T6.6 — AC ER-2-3). MANUAL/AUTO → CONFIRMED. extrusion:confirm(SEC: 확정 권한 분리). */
 export async function confirmExtrusionSchedule(weekStartISO: string): Promise<ExtMoveResult> {
   const session = await auth();
   try {
-    requirePermission(session?.user, 'extrusion:write');
+    requirePermission(session?.user, 'extrusion:confirm');
   } catch {
-    return { ok: false, message: '확정 권한(extrusion:write)이 없습니다.' };
+    return { ok: false, message: '확정 권한(extrusion:confirm)이 없습니다.' };
   }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(weekStartISO)) return { ok: false, message: '주간 시작일 형식 오류.' };
 

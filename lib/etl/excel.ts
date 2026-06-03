@@ -35,3 +35,16 @@ export function toNumber(v: CellValue): number | null {
   if (typeof v === 'string' && v.trim() !== '' && !Number.isNaN(Number(v))) return Number(v);
   return null;
 }
+
+/** 수량 셀 정상값 상한(PostgreSQL Int4) — overflow 방지(SEC). */
+export const MAX_QUANTITY = 2_147_483_647;
+
+/**
+ * 수량 셀 → 양의 정수(SEC). 소수·Infinity·0·음수·범위초과는 null(호출부가 행 제외/경고).
+ * 정수가 아닌 양수 셀(예: 1.5)이 Int 컬럼에 도달해 배치 전체가 롤백되는 사고를 막는다.
+ */
+export function toQuantity(v: CellValue): number | null {
+  const n = toNumber(v);
+  if (n === null || !Number.isFinite(n) || !Number.isInteger(n) || n <= 0 || n > MAX_QUANTITY) return null;
+  return n;
+}
