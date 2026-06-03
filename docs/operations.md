@@ -8,15 +8,17 @@
 
 ## 0. 적용 체크리스트 (요약)
 
-- [ ] T11.7 사내 서버 배포 (`docker-compose.prod.yml` + nginx HTTPS + IP 화이트리스트)
-- [ ] T11.5 Sentry self-hosted + `@sentry/nextjs` 설치 + DSN + source map
-- [ ] T11.6 Grafana KSF 6지표 대시보드 + 알림 룰
-- [ ] T11.2 k6 부하 테스트(8 임계치, p95 + 오류율 <0.5%)
-- [ ] T11.4 Lighthouse CI(Perf ≥90, A11y ≥95 / W-1·W-4·W-5)
-- [ ] T11.3 보충: `npm audit`, OWASP ZAP 월1회, Dependabot/Renovate
-- [ ] T11.8 일일 백업(DB→NAS, 1년 보존) + 복구 시뮬(RTO ≤4h) + AuditLog 5년 아카이빙
+> 📦 **구성 파일이 [infrastructure/](../infrastructure/)에 산출됨** — 아래는 "산출 완료 → 서버에서 적용" 상태. 파일 인덱스는 [infrastructure/README.md](../infrastructure/README.md).
 
-> ⚠️ 신규 npm 의존성(`@sentry/nextjs`, `@lhci/cli`)·`.github/workflows` 변경은 **이 적용 단계에서** 별도 브랜치로 추가한다(자동화 루프 범위 밖).
+- [ ] T11.7 사내 서버 배포 — 파일: `infrastructure/docker-compose.prod.yml` + `nginx/nginx.conf`(HTTPS·IP 화이트리스트). 서버에서 `up -d`.
+- [ ] T11.5 Sentry self-hosted — 템플릿: `infrastructure/sentry/`(`.ts.example`). `@sentry/nextjs` 설치 PR 후 적용.
+- [ ] T11.6 Grafana KSF 6지표 — 파일: `infrastructure/grafana/dashboards/ksf.json`(provisioning 자동 로드). 알림 룰은 §3.
+- [ ] T11.2 k6 부하 — 파일: `infrastructure/k6/scenario.js`(8 임계치). k6 바이너리로 실행.
+- [ ] T11.4 Lighthouse CI — 파일: `infrastructure/lighthouse/lighthouserc.js`. `@lhci/cli` 설치 후 실행.
+- [ ] T11.3 보충: `npm audit` + OWASP ZAP 월1회 + Dependabot/Renovate(적용 단계).
+- [ ] T11.8 일일 백업·복구·아카이빙 — 파일: `infrastructure/scripts/backup.sh`·`restore.sh`·`sql/archive-auditlog.sql`. cron 등록.
+
+> ⚠️ 신규 npm 의존성(`@sentry/nextjs`, `@lhci/cli`)·`.github/workflows` 변경은 **적용 단계에서** 별도 브랜치로 추가한다(자동화 루프 범위 밖). 구성 파일 자체는 본 단계에서 산출 완료.
 
 ---
 
