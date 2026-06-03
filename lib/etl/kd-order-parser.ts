@@ -1,4 +1,4 @@
-import { type CellValue, excelSerialToISO, isDateSerial, toNumber, readSheetMatrix, listSheets } from '@/lib/etl/excel';
+import { type CellValue, excelSerialToISO, isDateSerial, toQuantity, readSheetMatrix, listSheets } from '@/lib/etl/excel';
 import type { ParseResult, ParsedOrderRow } from '@/lib/orders/types';
 
 export const KD_SHEET_NAME = 'kd 발주';
@@ -17,14 +17,14 @@ export function parseKdOrder(matrix: CellValue[][]): ParseResult {
 
   for (const row of matrix) {
     const rawProductCode = String(row[COL.productCode] ?? '').trim();
-    const quantity = toNumber(row[COL.quantity]);
+    const quantity = toQuantity(row[COL.quantity]);
     const serial = isDateSerial(row[COL.dateChanged])
       ? (row[COL.dateChanged] as number)
       : isDateSerial(row[COL.dateOriginal])
         ? (row[COL.dateOriginal] as number)
         : null;
 
-    if (!rawProductCode || !quantity || quantity <= 0 || serial === null) continue;
+    if (!rawProductCode || quantity === null || serial === null) continue; // SEC: 정수 수량 보장
 
     rows.push({
       rawProductCode,

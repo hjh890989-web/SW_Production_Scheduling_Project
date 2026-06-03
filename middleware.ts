@@ -30,6 +30,7 @@ export default auth((req) => {
 });
 
 export const config = {
-  // api(자체 가드)·정적 자원·login·forbidden 은 미들웨어 가드에서 제외
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|login|forbidden).*)'],
+  // api(자체 가드)·정적 자원·login·forbidden·offline·sw·manifest 는 미들웨어 가드에서 제외
+  // (offline/sw.js/manifest는 인증 없이 접근 가능해야 SW 프리캐시·오프라인 폴백이 동작)
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|login|forbidden|offline|sw.js|manifest.webmanifest).*)'],
 };

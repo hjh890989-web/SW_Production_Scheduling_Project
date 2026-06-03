@@ -1,4 +1,4 @@
-import { type CellValue, excelSerialToISO, isDateSerial, toNumber } from '@/lib/etl/excel';
+import { type CellValue, excelSerialToISO, isDateSerial, toQuantity } from '@/lib/etl/excel';
 import type { ParseResult, ParsedOrderRow } from '@/lib/orders/types';
 
 /**
@@ -44,8 +44,8 @@ export function parseWeeklyPlan(matrix: CellValue[][]): ParseResult {
     const orderType = String(row[typeCol] ?? '').toUpperCase().includes('KD') ? 'KD' : 'OEM';
 
     for (const c of dateCols) {
-      const qty = toNumber(row[c]);
-      if (!qty || qty <= 0) continue; // 0/빈 셀 제외 (AC T3.1-2)
+      const qty = toQuantity(row[c]);
+      if (qty === null) continue; // 0/빈/소수/범위초과 셀 제외 (AC T3.1-2, SEC: 정수 보장)
       rows.push({
         rawProductCode,
         deliveryDate: excelSerialToISO(dateRow[c] as number),

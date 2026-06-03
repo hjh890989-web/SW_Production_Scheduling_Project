@@ -25,7 +25,8 @@ export async function POST(req: NextRequest) {
 
   const parsed = instructionSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ ok: false, error: 'validation', issues: parsed.error.issues }, { status: 422 });
+    console.warn('[MES] instruction validation failed', parsed.error.issues); // SEC: 내부 로그만, 응답엔 미노출
+    return NextResponse.json({ ok: false, error: 'validation' }, { status: 422 });
   }
 
   const result = await dispatchInstruction(parsed.data);

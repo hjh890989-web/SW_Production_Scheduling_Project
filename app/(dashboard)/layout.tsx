@@ -19,7 +19,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const session = await auth();
   const userId = session?.user?.id ?? '';
   const [notifications, unread] = userId
-    ? await Promise.all([getNotifications(userId), getUnreadCount(userId)])
+    ? await Promise.all([getNotifications(), getUnreadCount()])
     : [[], 0];
 
   return (

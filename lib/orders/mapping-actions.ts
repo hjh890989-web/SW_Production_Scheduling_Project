@@ -22,6 +22,8 @@ export interface MappingActionResult {
 
 /** 3 sourceType 매핑 룰을 DB(있으면) 또는 기본값으로 반환. */
 export async function getMappingRules(): Promise<MappingRule[]> {
+  const session = await auth(); // SEC: 노출된 액션 — master:read 가드
+  requirePermission(session?.user, 'master:read');
   const stored = await prisma.excelMappingRule.findMany();
   const byType = new Map(stored.map((s) => [s.sourceType, s]));
   return SOURCE_TYPES.map((st) => {

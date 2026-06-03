@@ -22,17 +22,28 @@ export function isDue(nextRetry: Date, now: Date): boolean {
   return nextRetry.getTime() <= now.getTime();
 }
 
+/** YYYY-MM-DD 형식 + 실제 달력상 유효 일자(SEC: 2026-13-40 등 거부). */
+const isoDate = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/)
+  .refine((s) => {
+    const d = new Date(`${s}T00:00:00.000Z`);
+    return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === s;
+  }, '유효한 달력 일자가 아닙니다');
+
 export const instructionSchema = z.object({
-  instructionId: z.string().min(1),
-  weekStart: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  instructionId: z.string().min(1).max(200),
+  weekStart: isoDate,
   process: z.enum(['MOLDING', 'EXTRUSION']),
-  lines: z.array(
-    z.object({
-      equipmentCode: z.string().min(1),
-      productCode: z.string().min(1),
-      quantity: z.number().int().nonnegative(),
-    }),
-  ),
+  lines: z
+    .array(
+      z.object({
+        equipmentCode: z.string().min(1).max(100),
+        productCode: z.string().min(1).max(100),
+        quantity: z.number().int().nonnegative().max(2_147_483_647),
+      }),
+    )
+    .max(1000),
 });
 
 export type InstructionPayload = z.infer<typeof instructionSchema>;

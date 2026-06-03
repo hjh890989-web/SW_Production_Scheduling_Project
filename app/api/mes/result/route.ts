@@ -36,7 +36,8 @@ export async function POST(req: NextRequest) {
 
   const parsed = mesResultBatchSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ ok: false, error: 'validation', issues: parsed.error.issues }, { status: 422 });
+    console.warn('[MES] result validation failed', parsed.error.issues); // SEC: 내부 로그만, 응답엔 미노출
+    return NextResponse.json({ ok: false, error: 'validation' }, { status: 422 });
   }
 
   const records = dedupeByExternalId(parsed.data.results);
@@ -56,8 +57,17 @@ export async function POST(req: NextRequest) {
       skipped += 1;
       continue;
     }
-    await prisma.productionResult.create({ data: toProductionResultData(record, item.id) });
-    // T9.3: 생산 실적 적재 → 재고 자동 증가(트랜잭션·음수 가드)
+    try {
+      await prisma.productionResult.create({ data: toProductionResultData(record, item.id) });
+    } catch (err) {
+      // SEC: 동시 중복 수신 시 @unique 경합(P2002)은 멱등 skip으로 처리(500 방지)
+      if (err && typeof err === 'object' && (err as { code?: string }).code === 'P2002') {
+        skipped += 1;
+        continue;
+      }
+      throw err;
+    }
+    // T9.3: 생산 실적 적재 → 재고 자동 증가(원자 increment)
     await applyInventoryChange(item.id, productionDelta(record.quantity));
     inserted += 1;
   }

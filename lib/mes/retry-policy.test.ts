@@ -43,4 +43,11 @@ describe('instructionSchema (T9.4)', () => {
     expect(instructionSchema.safeParse({ ...ok, weekStart: '2026/06/01' }).success).toBe(false);
     expect(instructionSchema.safeParse({ ...ok, process: 'CUTTING' }).success).toBe(false);
   });
+
+  it('SEC: 달력상 무효 일자·과대 배치·overflow 거부', () => {
+    expect(instructionSchema.safeParse({ ...ok, weekStart: '2026-13-40' }).success).toBe(false);
+    expect(instructionSchema.safeParse({ ...ok, weekStart: '2026-02-30' }).success).toBe(false);
+    expect(instructionSchema.safeParse({ ...ok, lines: Array(1001).fill(ok.lines[0]) }).success).toBe(false);
+    expect(instructionSchema.safeParse({ ...ok, lines: [{ equipmentCode: 'E', productCode: 'P', quantity: 2_147_483_648 }] }).success).toBe(false);
+  });
 });
