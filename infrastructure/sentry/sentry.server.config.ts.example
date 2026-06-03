@@ -1,0 +1,8 @@
+// T11.5 Sentry 서버 설정 템플릿 — 적용 시 프로젝트 루트에 sentry.server.config.ts 로 복사.
+import * as Sentry from '@sentry/nextjs';
+
+Sentry.init({
+  dsn: process.env.SENTRY_DSN, // 사내 self-hosted DSN
+  tracesSampleRate: 0.1,
+  environment: process.env.NODE_ENV,
+});

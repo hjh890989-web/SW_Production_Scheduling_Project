@@ -1,0 +1,73 @@
+{
+  "uid": "evs-ksf",
+  "title": "EVS - KSF 비즈니스 KPI",
+  "schemaVersion": 39,
+  "version": 1,
+  "tags": ["evs", "ksf"],
+  "refresh": "5m",
+  "time": { "from": "now-90d", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "KSF-1 납기 준수율",
+      "datasource": "PostgreSQL",
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1, "thresholds": { "steps": [{ "color": "red", "value": 0 }, { "color": "green", "value": 0.95 }] } } },
+      "targets": [{ "format": "time_series", "rawSql": "SELECT date AS time, \"ksf1Punctuality\" AS value FROM \"KsfDailySnapshot\" WHERE \"ksf1Punctuality\" IS NOT NULL ORDER BY date" }],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "KSF-1 현재 납기율",
+      "datasource": "PostgreSQL",
+      "fieldConfig": { "defaults": { "unit": "percentunit" } },
+      "targets": [{ "format": "table", "rawSql": "SELECT \"ksf1Punctuality\" AS value FROM \"KsfDailySnapshot\" ORDER BY date DESC LIMIT 1" }],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "KSF-5 수주 일원화율",
+      "datasource": "PostgreSQL",
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1 } },
+      "targets": [{ "format": "time_series", "rawSql": "SELECT date AS time, \"ksf5Unification\" AS value FROM \"KsfDailySnapshot\" WHERE \"ksf5Unification\" IS NOT NULL ORDER BY date" }],
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 }
+    },
+    {
+      "id": 4,
+      "type": "gauge",
+      "title": "KSF-6 수동보정 채택률",
+      "datasource": "PostgreSQL",
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1 } },
+      "targets": [{ "format": "table", "rawSql": "SELECT \"ksf6Adoption\" AS value FROM \"KsfDailySnapshot\" ORDER BY date DESC LIMIT 1" }],
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "KSF-2 다이/노즐 변경 (계획 기준)",
+      "datasource": "Prometheus",
+      "targets": [{ "expr": "evs_die_changes_total" }],
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 16 }
+    },
+    {
+      "id": 6,
+      "type": "stat",
+      "title": "KSF-4 스케줄링 소요시간(자가보고)",
+      "datasource": "PostgreSQL",
+      "fieldConfig": { "defaults": { "unit": "m" } },
+      "targets": [{ "format": "table", "rawSql": "SELECT value::float AS value FROM \"OperationParam\" WHERE key = 'ksf4_scheduling_minutes' LIMIT 1" }],
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 16 }
+    },
+    {
+      "id": 7,
+      "type": "stat",
+      "title": "KSF-3 변동 영향 시각화 시간",
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "targets": [{ "expr": "histogram_quantile(0.95, rate(evs_impact_sim_seconds_bucket[1h]))" }],
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 16 }
+    }
+  ]
+}
