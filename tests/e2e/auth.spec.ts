@@ -22,8 +22,8 @@ test.afterAll(async () => {
 
 async function login(page: import('@playwright/test').Page, username: string, password: string) {
   await page.goto('/login');
-  await page.getByLabel('아이디').fill(username);
-  await page.getByLabel('비밀번호', { exact: true }).fill(password);
+  await page.getByLabel('사번').fill(username);
+  await page.getByLabel('비밀번호 (4자리 PIN)').fill(password);
   await page.getByRole('button', { name: '로그인' }).click();
 }
 
