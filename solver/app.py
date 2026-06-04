@@ -1,7 +1,7 @@
-"""EVS 성형 솔버 마이크로서비스 (T12.1 — FastAPI + OR-Tools CP-SAT).
+"""EVS 솔버 마이크로서비스 (T12.1 — FastAPI + OR-Tools CP-SAT).
 
 실행: uvicorn app:app --host 0.0.0.0 --port 8000
-연동: lib/scheduler/solver-client.ts (env SOLVER_URL)에서 POST /schedule/molding.
+연동: lib/scheduler/solver-client.ts (env SOLVER_URL)에서 POST /schedule/*.
 사내망 전용 — 외부 LLM/SaaS 호출 없음(D8).
 """
 from __future__ import annotations
@@ -9,8 +9,9 @@ from __future__ import annotations
 from fastapi import FastAPI
 
 from solver_molding import schedule_molding
+from solver_extrusion import schedule_extrusion
 
-app = FastAPI(title="EVS Molding Solver", version="0.1.0")
+app = FastAPI(title="EVS Solver", version="0.1.0")
 
 
 @app.get("/health")
@@ -21,5 +22,11 @@ def health() -> dict:
 
 @app.post("/schedule/molding")
 def molding(payload: dict) -> dict:
-    """성형 스케줄 — 룰 스케줄러와 동일 불변식(슬롯 O/X·D-2·용량·부분성공)."""
+    """성형 — 슬롯 O/X · D-2 납기 · 가류기 용량 · 부분성공."""
     return schedule_molding(payload)
+
+
+@app.post("/schedule/extrusion")
+def extrusion(payload: dict) -> dict:
+    """압출 — 압출기 호환 · D-1 · 근무 용량 + (group,headPin) 다이/노즐 변경 최소화 · 부분성공."""
+    return schedule_extrusion(payload)
