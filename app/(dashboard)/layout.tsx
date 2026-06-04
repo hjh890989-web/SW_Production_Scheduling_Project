@@ -71,7 +71,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
       <footer className="mt-auto flex flex-col items-center gap-2 border-t py-6">
         {/* eslint-disable-next-line @next/next/no-img-element -- 정적 SVG 로고(공통 Check In) */}
-        <img src="/check-in-main-logo.svg" alt="Check In" className="h-10 w-auto" />
+        <img src="/check-in-main-logo.svg" alt="Check In" className="h-16 w-auto" />
         <p className="text-sm text-muted-foreground">송우산업 사내 업무 자동화 플랫폼</p>
       </footer>
     </div>
