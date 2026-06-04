@@ -42,6 +42,7 @@ export const authConfig = {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as Role;
+        session.user.mustChangePassword = (token as { mcp?: boolean }).mcp ?? false;
       }
       return session;
     },
