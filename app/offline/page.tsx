@@ -1,6 +1,9 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = { title: '오프라인 · EVS' };
+// SEC: CSP nonce는 per-request 동적 렌더에만 부여됨 → 정적 프리렌더 시 스크립트가 nonce 없이 차단된다.
+// 오프라인 폴백도 nonce를 받도록 동적 렌더(번들 작음, SW가 nonce-HTML/CSP 쌍을 함께 캐시).
+export const dynamic = 'force-dynamic';
 
 /**
  * SEC — 세션/사용자 데이터가 전혀 없는 정적 오프라인 폴백(SW 프리캐시 대상).
