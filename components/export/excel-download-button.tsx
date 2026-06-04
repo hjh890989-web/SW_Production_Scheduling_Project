@@ -21,7 +21,7 @@ export function ExcelDownloadButton({ weekStart }: { weekStart: string }) {
         setMsg({ text: res.message, ok: false });
         return;
       }
-      const result = downloadScheduleExcel(res.molding, res.extrusion, `스케줄_${weekStart}.xlsx`);
+      const result = await downloadScheduleExcel(res.molding, res.extrusion, `스케줄_${weekStart}.xlsx`);
       setMsg({ text: result.message, ok: result.ok });
     });
   }

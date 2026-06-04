@@ -40,11 +40,11 @@ export function parseKdOrder(matrix: CellValue[][]): ParseResult {
   return { rows, errors };
 }
 
-/** 파일에서 'kd 발주' 시트를 읽어 파싱. 시트 누락 시 명확한 에러 (AC T3.2-F1). */
-export function parseKdOrderFile(filePath: string): ParseResult {
-  const sheets = listSheets(filePath);
+/** 파일에서 'kd 발주' 시트를 읽어 파싱(async — exceljs). 시트 누락 시 명확한 에러 (AC T3.2-F1). */
+export async function parseKdOrderFile(filePath: string): Promise<ParseResult> {
+  const sheets = await listSheets(filePath);
   if (!sheets.includes(KD_SHEET_NAME)) {
     return { rows: [], errors: [`'${KD_SHEET_NAME}' 시트가 없습니다. 시트명을 확인하세요. (존재: ${sheets.join(', ')})`] };
   }
-  return parseKdOrder(readSheetMatrix(filePath, KD_SHEET_NAME));
+  return parseKdOrder(await readSheetMatrix(filePath, KD_SHEET_NAME));
 }

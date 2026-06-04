@@ -44,7 +44,7 @@ jobs:
         run: npm run build
 
   audit:
-    name: 의존성 보안 audit (자문)
+    name: 의존성 보안 audit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -53,9 +53,11 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      # 자문(advisory): xlsx 등 이연 취약점이 있어 차단하지 않는다(잡은 green, 발견 시 warning 주석).
-      # 패치/이관 후 `|| echo ...`를 제거해 차단 게이트로 승격할 것(docs/SECURITY_FINDINGS.md).
-      - name: npm audit (high+, 자문)
+      # 차단 게이트: 운영 의존성에 critical 취약점이 있으면 실패(xlsx 이관 후 승격, 현재 clean).
+      - name: prod critical (차단)
+        run: npm audit --omit=dev --audit-level=critical
+      # 자문: 운영 high는 next@14.2.x 어드바이저리만 남음 → Next 16 메이저 업그레이드 필요(별도). 차단 아님.
+      - name: prod high (자문 — next는 Next 16 필요)
         run: |
-          npm audit --audit-level=high \
-            || echo "::warning title=의존성 취약점(자문)::npm audit가 high+ 취약점을 보고했습니다 — docs/SECURITY_FINDINGS.md(xlsx 등) 참고, 차단 아님"
+          npm audit --omit=dev --audit-level=high \
+            || echo "::warning title=prod high(자문)::next 어드바이저리 — Next 16 업그레이드 시 해소(docs/SECURITY_FINDINGS.md)"
