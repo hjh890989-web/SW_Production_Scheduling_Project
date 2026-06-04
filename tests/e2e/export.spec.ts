@@ -13,7 +13,7 @@ async function login(page: Page, username: string, password: string) {
 }
 
 test('AC T8.4-1: W-4 엑셀 다운로드 버튼 → 다운로드 또는 데이터 없음 안내', async ({ page }) => {
-  await login(page, 'kimms', 'Test1234!');
+  await login(page, '90000001', '0000');
   await page.goto('/molding');
   const btn = page.getByRole('button', { name: '엑셀 다운로드' });
   await expect(btn).toBeVisible();
@@ -30,7 +30,7 @@ test('AC T8.4-1: W-4 엑셀 다운로드 버튼 → 다운로드 또는 데이�
 });
 
 test('AC T8.4-1: 작업지시서 A4 인쇄 뷰 (큰 글씨 헤더)', async ({ page }) => {
-  await login(page, 'kimms', 'Test1234!');
+  await login(page, '90000001', '0000');
   await page.goto('/work-instruction');
   await expect(page.getByRole('heading', { name: /작업지시서/ })).toBeVisible();
   // 인쇄/PDF 버튼 존재 (window.print 트리거)
@@ -38,7 +38,7 @@ test('AC T8.4-1: 작업지시서 A4 인쇄 뷰 (큰 글씨 헤더)', async ({ pa
 });
 
 test('AC T8.4-1: 분기 리포트 — 도입 전/후 비교표', async ({ page }) => {
-  await login(page, 'kimms', 'Test1234!');
+  await login(page, '90000001', '0000');
   await page.goto('/reports/quarterly?quarter=2026-Q2');
   await expect(page.getByRole('heading', { name: /분기 KSF 리포트/ })).toBeVisible();
   await expect(page.getByText(/도입 전/)).toBeVisible();

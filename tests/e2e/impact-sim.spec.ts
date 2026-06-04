@@ -13,7 +13,7 @@ async function login(page: Page, username: string, password: string) {
 }
 
 test('AC PM-1-1/KSF-3: W-3 품번 입력 → ≤5초 영향 시뮬 패널', async ({ page }) => {
-  await login(page, 'kimms', 'Test1234!');
+  await login(page, '90000001', '0000');
   await page.goto('/orders/change');
   const start = Date.now();
   await page.getByLabel('품번').fill('25490-03HA0');
@@ -23,7 +23,7 @@ test('AC PM-1-1/KSF-3: W-3 품번 입력 → ≤5초 영향 시뮬 패널', asyn
 });
 
 test('AC PM-1-2: 영향 카드 → W-4/W-5 하이라이트 링크 이동', async ({ page }) => {
-  await login(page, 'kimms', 'Test1234!');
+  await login(page, '90000001', '0000');
   await page.goto('/orders/change');
   await page.getByLabel('품번').fill('25490-03HA0');
 

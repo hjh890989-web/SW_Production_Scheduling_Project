@@ -21,7 +21,7 @@ async function login(page: Page, username: string, password: string) {
 }
 
 test('대시보드 진입 + 헤더 알림 벨 노출', async ({ page }) => {
-  await login(page, 'kimms', 'Test1234!');
+  await login(page, '90000001', '0000');
   await page.goto('/');
   await expect(page.getByRole('heading', { name: /통합 대시보드/ })).toBeVisible({ timeout: 10_000 });
   await expect(page.getByRole('button', { name: /알림/ })).toBeVisible();
@@ -29,7 +29,7 @@ test('대시보드 진입 + 헤더 알림 벨 노출', async ({ page }) => {
 
 test('변동 입력 → ORDER_CHANGED audit 기록 (AC SP-2 흐름)', async ({ page }) => {
   const before = await prisma.auditLog.count({ where: { action: 'ORDER_CHANGED' } });
-  await login(page, 'kimms', 'Test1234!');
+  await login(page, '90000001', '0000');
   await page.goto('/orders/change');
   await page.getByLabel('품번').fill('25490-03HA0');
   await page.getByLabel(/신규 값/).fill('500');
@@ -43,7 +43,7 @@ test('변동 입력 → ORDER_CHANGED audit 기록 (AC SP-2 흐름)', async ({ p
 });
 
 test('감사 이력 화면에서 본인 기록 조회', async ({ page }) => {
-  await login(page, 'kimms', 'Test1234!');
+  await login(page, '90000001', '0000');
   await page.goto('/orders/audit');
   await expect(page.getByRole('heading', { name: /감사 이력/ })).toBeVisible();
   await expect(page.getByRole('button', { name: 'CSV 다운로드' })).toBeVisible();
@@ -57,7 +57,7 @@ test('KSF 스냅샷 적재 후 대시보드 정상 표시', async ({ page }) => 
     update: { ksf5Unification: 1 },
     create: { date: day, ksf5Unification: 1 },
   });
-  await login(page, 'kimms', 'Test1234!');
+  await login(page, '90000001', '0000');
   await page.goto('/');
   await expect(page.getByText('KSF 6지표')).toBeVisible({ timeout: 10_000 });
 });

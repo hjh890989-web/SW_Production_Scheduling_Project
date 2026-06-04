@@ -23,7 +23,7 @@ describe('시드 데이터 (T1.7)', () => {
 
   it('AC T1.7-F1: 정책 위반 비밀번호는 명확한 에러', () => {
     expect(() =>
-      assertSeedPolicy([{ username: 'weak', password: '1234', name: 'x', role: 'ADMIN', email: 'w@evs.local' }]),
+      assertSeedPolicy([{ username: 'weak', password: '123', name: 'x', role: 'ADMIN', email: 'w@evs.local' }]),
     ).toThrow(/정책 위반/);
   });
 });

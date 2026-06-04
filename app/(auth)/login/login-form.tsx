@@ -44,11 +44,14 @@ export function LoginForm({ callbackUrl }: { callbackUrl: string }) {
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate className="flex flex-col gap-5">
       <div className="flex flex-col gap-2">
-        <Label htmlFor="username">아이디</Label>
+        <Label htmlFor="username">사번</Label>
         <Input
           id="username"
+          inputMode="numeric"
           autoComplete="username"
           autoFocus
+          maxLength={8}
+          placeholder="예: 20230101"
           aria-invalid={!!errors.username}
           {...register('username')}
         />
@@ -60,12 +63,15 @@ export function LoginForm({ callbackUrl }: { callbackUrl: string }) {
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="password">비밀번호</Label>
+        <Label htmlFor="password">비밀번호 (4자리 PIN)</Label>
         <div className="relative">
           <Input
             id="password"
             type={showPassword ? 'text' : 'password'}
+            inputMode="numeric"
             autoComplete="current-password"
+            maxLength={4}
+            placeholder="초기값 0000"
             aria-invalid={!!errors.password}
             className="pr-16"
             {...register('password')}
@@ -92,7 +98,12 @@ export function LoginForm({ callbackUrl }: { callbackUrl: string }) {
         </p>
       )}
 
-      <Button type="submit" disabled={isSubmitting} className="h-11 text-base">
+      <Button
+        type="submit"
+        disabled={isSubmitting}
+        style={{ backgroundColor: '#2d6cdf' }}
+        className="h-11 text-base text-white hover:opacity-90"
+      >
         {isSubmitting ? '로그인 중…' : '로그인'}
       </Button>
     </form>

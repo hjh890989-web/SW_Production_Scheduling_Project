@@ -10,7 +10,7 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 // 잠금 테스트 전용 사용자(다른 시드 계정 오염 방지)
-const LOCK_USER = { username: 'leeyh', password: 'Test1234!' };
+const LOCK_USER = { username: '90000003', password: '0000' };
 
 test.afterAll(async () => {
   // 잠금 테스트로 남은 상태 정리 (AC: 변경 시 cleanup)
@@ -33,13 +33,13 @@ test('AC T1.3-1: 미인증 접근 → /login redirect (callbackUrl 보존)', asy
 });
 
 test('AC T1.4-1: 로그인 성공 → 대시보드(/) redirect', async ({ page }) => {
-  await login(page, 'admin', 'admin1234!');
+  await login(page, 'admin', '1234');
   await expect(page).toHaveURL('http://localhost:3000/');
 });
 
 test('AC T1.1-F1: 로그인 실패 → 에러 + LOGIN_FAILED audit 증가', async ({ page }) => {
   const before = await prisma.auditLog.count({ where: { action: 'LOGIN_FAILED' } });
-  await login(page, 'kimms', 'wrong-password!');
+  await login(page, '90000001', '9999');
   await expect(page.getByRole('alert').filter({ hasText: /\S/ })).toContainText('올바르지 않습니다');
   const after = await prisma.auditLog.count({ where: { action: 'LOGIN_FAILED' } });
   expect(after).toBeGreaterThan(before);
@@ -51,7 +51,7 @@ test('AC T1.4-F1/T1.5: 5회 실패 → 계정 잠금', async ({ page }) => {
     data: { failedLogins: 0, lockedUntil: null },
   });
   for (let i = 0; i < 5; i += 1) {
-    await login(page, LOCK_USER.username, 'definitely-wrong!');
+    await login(page, LOCK_USER.username, '9999');
     await expect(page.getByRole('alert').filter({ hasText: /\S/ })).toBeVisible();
   }
   const user = await prisma.user.findUnique({ where: { username: LOCK_USER.username } });
@@ -62,7 +62,7 @@ test('AC T1.4-F1/T1.5: 5회 실패 → 계정 잠금', async ({ page }) => {
 test('AC T1.3-F1/MR-1-F1: 권한 없음 → 403 + UNAUTHORIZED_ACCESS audit', async ({ page }) => {
   const before = await prisma.auditLog.count({ where: { action: 'UNAUTHORIZED_ACCESS' } });
   // 박철수(MOLDING_LEADER)는 order:read 권한 없음(extrusion:read는 보유 — 교차 조회 허용, lib/permissions.ts)
-  await login(page, 'parkcs', 'Test1234!');
+  await login(page, '90000002', '0000');
   await expect(page).not.toHaveURL(/\/login/);
   await page.goto('/orders');
   await expect(page).toHaveURL(/\/forbidden/);
@@ -73,7 +73,7 @@ test('AC T1.3-F1/MR-1-F1: 권한 없음 → 403 + UNAUTHORIZED_ACCESS audit', as
 
 test('AC T1.8-2: LOGIN audit 기록 확인', async ({ page }) => {
   const before = await prisma.auditLog.count({ where: { action: 'LOGIN' } });
-  await login(page, 'admin', 'admin1234!');
+  await login(page, 'admin', '1234');
   await expect(page).toHaveURL('http://localhost:3000/');
   const after = await prisma.auditLog.count({ where: { action: 'LOGIN' } });
   expect(after).toBeGreaterThan(before);

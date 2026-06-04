@@ -21,7 +21,7 @@ async function login(page: Page, username: string, password: string) {
 }
 
 test('성형 반장 박철수 → W-4 진입 + 자동 생성 버튼', async ({ page }) => {
-  await login(page, 'parkcs', 'Test1234!');
+  await login(page, '90000002', '0000');
   await page.goto('/molding');
   await expect(page.getByRole('heading', { name: /성형 스케줄/ })).toBeVisible({ timeout: 10_000 });
   await expect(page.getByRole('button', { name: /자동 스케줄 생성/ })).toBeVisible();
@@ -29,7 +29,7 @@ test('성형 반장 박철수 → W-4 진입 + 자동 생성 버튼', async ({ p
 
 test('AC MR-3: 자동 스케줄 생성 → MOLDING_SCHEDULE_GENERATED audit', async ({ page }) => {
   const before = await prisma.auditLog.count({ where: { action: 'MOLDING_SCHEDULE_GENERATED' } });
-  await login(page, 'kimms', 'Test1234!'); // 생산관리(molding:write 보유)
+  await login(page, '90000001', '0000'); // 생산관리(molding:write 보유)
   await page.goto('/molding');
   await page.getByRole('button', { name: /자동 스케줄 생성/ }).click();
   await expect(page.getByText(/자동 생성 완료/)).toBeVisible({ timeout: 15_000 });
@@ -40,7 +40,7 @@ test('AC MR-3: 자동 스케줄 생성 → MOLDING_SCHEDULE_GENERATED audit', as
 });
 
 test('AC MR-2-1: 셀이 있으면 드래그로 다른 슬롯 이동 → MANUAL 전환', async ({ page }) => {
-  await login(page, 'kimms', 'Test1234!');
+  await login(page, '90000001', '0000');
   await page.goto('/molding');
   const cells = page.locator('[draggable="true"]');
   const count = await cells.count();

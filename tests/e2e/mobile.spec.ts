@@ -15,13 +15,13 @@ async function login(page: Page, username: string, password: string) {
 }
 
 test('T12.5.2: 모바일 KSF 대시보드 진입', async ({ page }) => {
-  await login(page, 'exec', 'Test1234!');
+  await login(page, '90000005', '0000');
   await page.goto('/mobile');
   await expect(page.getByRole('heading', { name: /모바일 KSF/ })).toBeVisible();
 });
 
 test('T12.5.5: 모바일 분기 리포트 진입', async ({ page }) => {
-  await login(page, 'exec', 'Test1234!');
+  await login(page, '90000005', '0000');
   await page.goto('/mobile/report?quarter=2026-Q2');
   await expect(page.getByRole('heading', { name: /분기 리포트/ })).toBeVisible();
 });

@@ -26,8 +26,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <div className="min-h-screen">
       <header className="flex items-center justify-between border-b bg-background px-4 py-2">
         <div className="flex items-center gap-6">
-          <Link href="/" className="text-lg font-bold">
-            EVS
+          <Link href="/" className="shrink-0" aria-label="EVS 홈">
+            {/* eslint-disable-next-line @next/next/no-img-element -- 정적 SVG 로고 */}
+            <img src="/check-in-evs-logo.svg" alt="EVS · Check In" className="h-8 w-auto" />
           </Link>
           <nav className="flex gap-4 text-base">
             {NAV.map((n) => (

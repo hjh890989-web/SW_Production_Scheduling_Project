@@ -24,7 +24,7 @@ async function login(page: Page, username: string, password: string) {
 }
 
 test('시나리오 1: 정수진 로그인 → W-2 업로드 → 적재 결과 표시 (AC SP-1-1)', async ({ page }) => {
-  await login(page, 'jungsj', 'Test1234!');
+  await login(page, '90000004', '0000');
   await page.goto('/orders/upload');
   await page.locator('input[type=file]').setInputFiles(WEEKLY_FILE);
   await page.getByRole('button', { name: /업로드 및 적재/ }).click();
@@ -33,7 +33,7 @@ test('시나리오 1: 정수진 로그인 → W-2 업로드 → 적재 결과 �
 
 test('시나리오 2 (DB 검증): 업로드 후 Order 적재 + sourceType 분포 (AC T3.9-2)', async ({ page }) => {
   const before = await prisma.order.count();
-  await login(page, 'jungsj', 'Test1234!');
+  await login(page, '90000004', '0000');
   await page.goto('/orders/upload');
   await page.locator('input[type=file]').setInputFiles(WEEKLY_FILE);
   await page.getByRole('button', { name: /업로드 및 적재/ }).click();
@@ -46,7 +46,7 @@ test('시나리오 2 (DB 검증): 업로드 후 Order 적재 + sourceType 분포
 });
 
 test('시나리오 3: 변동 입력 → 5초 grace 취소 노출 (AC SP-2-F2)', async ({ page }) => {
-  await login(page, 'kimms', 'Test1234!');
+  await login(page, '90000001', '0000');
   await page.goto('/orders/change');
   await page.getByLabel('품번').fill('25490-03HA0');
   await page.getByLabel(/신규 값/).fill('500');
