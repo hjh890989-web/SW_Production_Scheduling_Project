@@ -9,8 +9,9 @@ export const dynamic = 'force-dynamic';
 /**
  * T12.5.5 모바일 분기 리포트 (F-9). 도입 前後 비교를 모바일 카드로. 인쇄는 데스크톱(/reports/quarterly).
  */
-export default async function MobileReportPage({ searchParams }: { searchParams: { quarter?: string } }) {
-  const quarter = searchParams.quarter && /^\d{4}-Q[1-4]$/.test(searchParams.quarter) ? searchParams.quarter : '2026-Q2';
+export default async function MobileReportPage({ searchParams }: { searchParams: Promise<{ quarter?: string }> }) {
+  const sp = await searchParams; // Next 16: searchParams는 async
+  const quarter = sp.quarter && /^\d{4}-Q[1-4]$/.test(sp.quarter) ? sp.quarter : '2026-Q2';
   const res = await getQuarterlyReport(quarter);
 
   return (

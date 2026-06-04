@@ -53,11 +53,7 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      # 차단 게이트: 운영 의존성에 critical 취약점이 있으면 실패(xlsx 이관 후 승격, 현재 clean).
-      - name: prod critical (차단)
-        run: npm audit --omit=dev --audit-level=critical
-      # 자문: 운영 high는 next@14.2.x 어드바이저리만 남음 → Next 16 메이저 업그레이드 필요(별도). 차단 아님.
-      - name: prod high (자문 — next는 Next 16 필요)
-        run: |
-          npm audit --omit=dev --audit-level=high \
-            || echo "::warning title=prod high(자문)::next 어드바이저리 — Next 16 업그레이드 시 해소(docs/SECURITY_FINDINGS.md)"
+      # 차단 게이트: 운영(prod) 의존성에 high+ 취약점이 있으면 실패.
+      # xlsx 이관(exceljs) + Next 16 업그레이드로 prod high/critical clean → 자문→차단 승격.
+      - name: prod high+ (차단)
+        run: npm audit --omit=dev --audit-level=high

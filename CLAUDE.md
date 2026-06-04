@@ -49,7 +49,7 @@
 > 출처: [Stage_A/4_개발계획서_v1.3.md](Stage_A/4_개발계획서_v1.3.md) §13, [Stage_C/19_PRD_v1.4.md](Stage_C/19_PRD_v1.4.md), [Stage_D/issues/T0.*](Stage_D/issues/)
 
 ### Frontend
-- Framework: **Next.js 14+ App Router** (`output: 'standalone'`)
+- Framework: **Next.js 16 App Router** (`output: 'standalone'`, Turbopack 빌드; React 18.3)
 - Language: TypeScript (strict)
 - Styling: Tailwind CSS 3.x
 - Component Library: shadcn/ui (Radix UI 기반)

@@ -9,9 +9,10 @@ import { ExtrusionClient } from './extrusion-client';
 export const metadata: Metadata = { title: '압출 스케줄 W-5 · EVS' };
 export const dynamic = 'force-dynamic';
 
-export default async function ExtrusionPage({ searchParams }: { searchParams: { week?: string; highlightItem?: string } }) {
-  const weekStart = searchParams.week && /^\d{4}-\d{2}-\d{2}$/.test(searchParams.week)
-    ? weekMonday(searchParams.week)
+export default async function ExtrusionPage({ searchParams }: { searchParams: Promise<{ week?: string; highlightItem?: string }> }) {
+  const sp = await searchParams; // Next 16: searchParams는 async
+  const weekStart = sp.week && /^\d{4}-\d{2}-\d{2}$/.test(sp.week)
+    ? weekMonday(sp.week)
     : weekMonday('2026-05-18');
 
   const weekStartDate = new Date(`${weekStart}T00:00:00.000Z`);
@@ -39,8 +40,8 @@ export default async function ExtrusionPage({ searchParams }: { searchParams: { 
       cellCount={entries.length}
       dieChange={{ autoTotal: dieChange.autoTotal, baselineTotal: dieChange.baselineTotal, reductionPct: Math.round(dieChange.reductionPct) }}
       load={load}
-      highlightKeys={searchParams.highlightItem ? matchedCellKeys(model.cells, searchParams.highlightItem) : []}
-      highlightItem={searchParams.highlightItem}
+      highlightKeys={sp.highlightItem ? matchedCellKeys(model.cells, sp.highlightItem) : []}
+      highlightItem={sp.highlightItem}
     />
   );
 }

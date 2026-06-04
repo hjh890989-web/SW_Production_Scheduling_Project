@@ -22,9 +22,10 @@ async function recordUnauthorized(from: string | null): Promise<void> {
 export default async function ForbiddenPage({
   searchParams,
 }: {
-  searchParams: { from?: string };
+  searchParams: Promise<{ from?: string }>;
 }) {
-  const from = typeof searchParams.from === 'string' ? searchParams.from : null;
+  const sp = await searchParams; // Next 16: searchParams는 async
+  const from = typeof sp.from === 'string' ? sp.from : null;
   await recordUnauthorized(from);
 
   return (

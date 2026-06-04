@@ -68,5 +68,6 @@
 ## 메모
 - ✅ 리뷰의 **우선순위 HIGH 4건(낙관적 락 DB CAS · sessionVersion 집행 · CSP nonce · MES 트랜잭션 원자성) 전부** 앱 구동 런타임 검증과 함께 **적용 완료** — 고심각도 발견 0건 잔존.
 - 남은 우선순위(MED): 업로드 supersede(제품결정)/MIME·매직바이트, audit 내구성(append-only 폴백), ERP 레코드별 가드.
-- **Next 14.2.x 어드바이저리 다수(DoS·XSS·캐시포이즌)** — 수정은 `next@16`(메이저). prod-high audit는 이 때문에 자문 유지, **prod-critical은 차단 게이트**. Next 16 업그레이드는 App Router breaking change가 많아 별도 대형 작업으로 검토.
+- ✅ **Next 14→16 업그레이드 완료**(런타임 검증) — Next 14.2.x 어드바이저리 다수(DoS·XSS·캐시포이즌) 해소. Turbopack 기본 빌드 대응(webpack 워크어라운드 제거), `searchParams`/`headers()` async 마이그레이션(9 페이지+audit), React 18.3 유지(Next 16 peer 허용), `next lint`→`eslint` 직접 호출. → **prod high/critical 모두 clean → CI audit를 prod-high 차단 게이트로 승격**.
+- 잔여(MED, 비차단): prod 6 moderate(postcss 등), 업로드 supersede(제품결정)/MIME, audit 내구성, ERP 레코드별 가드.
 - 본 라운드는 "외부 입력 표면 + 교차 사용자 노출 + 데이터 무결성"의 즉시 수정 가능분에 집중했다.

@@ -32,9 +32,9 @@ export function serializeAuditValue(value: unknown): string | null {
 }
 
 /** 요청 헤더에서 IP·UA 추출 (요청 스코프 밖이면 null). */
-function requestMeta(): { ipAddress: string | null; userAgent: string | null } {
+async function requestMeta(): Promise<{ ipAddress: string | null; userAgent: string | null }> {
   try {
-    const h = headers();
+    const h = await headers(); // Next 16: headers()는 async
     return {
       ipAddress: h.get('x-forwarded-for')?.split(',')[0]?.trim() ?? h.get('x-real-ip') ?? null,
       userAgent: h.get('user-agent') ?? null,
@@ -48,7 +48,7 @@ function requestMeta(): { ipAddress: string | null; userAgent: string | null } {
  * AuditLog 1건 기록. DB 실패 시에도 throw하지 않고 stdout으로 fallback (AC T1.6-F1 — loss 방지).
  */
 export async function logAudit(input: AuditInput): Promise<void> {
-  const meta = requestMeta();
+  const meta = await requestMeta();
   const data = {
     userId: input.userId ?? null,
     userRole: input.userRole ?? null,
