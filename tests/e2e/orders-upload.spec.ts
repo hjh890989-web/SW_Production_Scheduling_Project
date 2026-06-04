@@ -20,6 +20,7 @@ async function login(page: Page, username: string, password: string) {
   await page.getByLabel('아이디').fill(username);
   await page.getByLabel('비밀번호', { exact: true }).fill(password);
   await page.getByRole('button', { name: '로그인' }).click();
+  await expect(page).not.toHaveURL(/\/login/);
 }
 
 test('시나리오 1: 정수진 로그인 → W-2 업로드 → 적재 결과 표시 (AC SP-1-1)', async ({ page }) => {

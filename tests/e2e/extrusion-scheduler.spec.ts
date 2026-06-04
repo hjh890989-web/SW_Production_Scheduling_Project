@@ -17,6 +17,7 @@ async function login(page: Page, username: string, password: string) {
   await page.getByLabel('아이디').fill(username);
   await page.getByLabel('비밀번호', { exact: true }).fill(password);
   await page.getByRole('button', { name: '로그인' }).click();
+  await expect(page).not.toHaveURL(/\/login/);
 }
 
 test('압출 반장 이영호 → W-5 진입 + 자동 생성/확정 버튼', async ({ page }) => {
