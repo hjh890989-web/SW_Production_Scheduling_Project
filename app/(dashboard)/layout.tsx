@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { auth } from '@/auth';
+import { auth, signOut } from '@/auth';
 import { getNotifications, getUnreadCount } from '@/lib/notification-actions';
 import { NotificationBell } from '@/components/notification-bell';
 
@@ -23,7 +23,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     : [[], 0];
 
   return (
-    <div className="min-h-screen">
+    <div className="flex min-h-screen flex-col">
       <header className="flex items-center justify-between border-b bg-background px-4 py-2">
         <div className="flex items-center gap-6">
           <Link href="/" className="shrink-0" aria-label="EVS 홈">
@@ -45,9 +45,35 @@ export default async function DashboardLayout({ children }: { children: React.Re
               {session.user.name ?? session.user.id} · {session.user.role}
             </span>
           )}
+          <Link
+            href="/account/password"
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
+            비밀번호 변경
+          </Link>
+          <form
+            action={async () => {
+              'use server';
+              await signOut({ redirectTo: '/login' });
+            }}
+          >
+            <button
+              type="submit"
+              className="rounded-md border px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted"
+            >
+              로그아웃
+            </button>
+          </form>
         </div>
       </header>
-      {children}
+
+      <div className="flex-1">{children}</div>
+
+      <footer className="mt-auto flex flex-col items-center gap-2 border-t py-6">
+        {/* eslint-disable-next-line @next/next/no-img-element -- 정적 SVG 로고(공통 Check In) */}
+        <img src="/check-in-main-logo.svg" alt="Check In" className="h-16 w-auto" />
+        <p className="text-sm text-muted-foreground">송우산업 사내 업무 자동화 플랫폼</p>
+      </footer>
     </div>
   );
 }
