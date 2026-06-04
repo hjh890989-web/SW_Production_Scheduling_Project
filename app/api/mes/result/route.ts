@@ -7,7 +7,7 @@ import {
   dedupeByExternalId,
   toProductionResultData,
 } from '@/lib/mes/result-mapping';
-import { applyInventoryChange } from '@/lib/inventory/inventory-service';
+import { applyInventoryDeltaTx } from '@/lib/inventory/inventory-service';
 import { productionDelta } from '@/lib/inventory/delta';
 
 export const dynamic = 'force-dynamic';
@@ -58,17 +58,19 @@ export async function POST(req: NextRequest) {
       continue;
     }
     try {
-      await prisma.productionResult.create({ data: toProductionResultData(record, item.id) });
+      // SEC: 실적 적재 + 재고 증가를 단일 트랜잭션으로 — 부분 실패 시 함께 롤백(멱등 skip에 의한 영구 drift 방지)
+      await prisma.$transaction(async (tx) => {
+        await tx.productionResult.create({ data: toProductionResultData(record, item.id) });
+        await applyInventoryDeltaTx(tx, item.id, productionDelta(record.quantity));
+      });
     } catch (err) {
-      // SEC: 동시 중복 수신 시 @unique 경합(P2002)은 멱등 skip으로 처리(500 방지)
+      // 동시 중복 수신 시 @unique 경합(P2002)은 멱등 skip으로 처리(500 방지)
       if (err && typeof err === 'object' && (err as { code?: string }).code === 'P2002') {
         skipped += 1;
         continue;
       }
-      throw err;
+      throw err; // 그 외 실패: create+재고 모두 롤백 → 다음 동기화에서 정상 재시도(누락 없음)
     }
-    // T9.3: 생산 실적 적재 → 재고 자동 증가(원자 increment)
-    await applyInventoryChange(item.id, productionDelta(record.quantity));
     inserted += 1;
   }
 

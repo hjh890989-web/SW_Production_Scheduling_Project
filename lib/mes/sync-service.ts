@@ -4,7 +4,7 @@ import { logAudit } from '@/lib/audit';
 import { createNotification } from '@/lib/notify';
 import { createMesClient } from './factory';
 import { toProductionResultData } from './result-mapping';
-import { applyInventoryChange } from '@/lib/inventory/inventory-service';
+import { applyInventoryDeltaTx } from '@/lib/inventory/inventory-service';
 import { productionDelta } from '@/lib/inventory/delta';
 import { shouldAlert, computeSince, pickDueRetries, POLL_CRON } from './sync-policy';
 import { shouldRetry, nextRetryAt, type InstructionPayload } from './retry-policy';
@@ -44,8 +44,19 @@ export async function runMesSync(client: IMesClient = createMesClient(), now: Da
       skipped += 1;
       continue;
     }
-    await prisma.productionResult.create({ data: toProductionResultData(record, item.id) });
-    await applyInventoryChange(item.id, productionDelta(record.quantity));
+    try {
+      // SEC: 실적 적재 + 재고 증가를 단일 트랜잭션으로 — 부분 실패 시 함께 롤백(영구 drift 방지)
+      await prisma.$transaction(async (tx) => {
+        await tx.productionResult.create({ data: toProductionResultData(record, item.id) });
+        await applyInventoryDeltaTx(tx, item.id, productionDelta(record.quantity));
+      });
+    } catch (err) {
+      if (err && typeof err === 'object' && (err as { code?: string }).code === 'P2002') {
+        skipped += 1; // 동시 중복(라우트와 cron 겹침) — 멱등 skip
+        continue;
+      }
+      throw err;
+    }
     synced += 1;
   }
 
