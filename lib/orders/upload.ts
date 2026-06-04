@@ -1,13 +1,12 @@
 'use server';
 
 import { randomUUID } from 'node:crypto';
-import * as XLSX from 'xlsx';
 import { revalidatePath } from 'next/cache';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/db';
 import { requirePermission } from '@/lib/permissions';
 import { logAudit } from '@/lib/audit';
-import type { CellValue } from '@/lib/etl/excel';
+import { loadWorkbook, workbookMatrix, workbookSheetNames, type Workbook } from '@/lib/etl/excel';
 import { parseWeeklyPlan } from '@/lib/etl/weekly-plan-parser';
 import { parseKdOrder, KD_SHEET_NAME } from '@/lib/etl/kd-order-parser';
 import { parseMonthlyForecast } from '@/lib/etl/monthly-forecast-parser';
@@ -28,22 +27,17 @@ export interface UploadResult {
   errors?: string[];
 }
 
-function sheetMatrix(wb: XLSX.WorkBook, name: string): CellValue[][] {
-  const ws = wb.Sheets[name];
-  if (!ws) return [];
-  return XLSX.utils.sheet_to_json(ws, { header: 1, blankrows: false, defval: null }) as CellValue[][];
-}
-
-function parseByType(wb: XLSX.WorkBook, sourceType: SourceType): ParseResult {
-  if (sourceType === 'weekly_plan') return parseWeeklyPlan(sheetMatrix(wb, wb.SheetNames[0]));
+function parseByType(wb: Workbook, sourceType: SourceType): ParseResult {
+  const names = workbookSheetNames(wb);
+  if (sourceType === 'weekly_plan') return parseWeeklyPlan(workbookMatrix(wb, names[0]));
   if (sourceType === 'kd') {
-    if (!wb.SheetNames.includes(KD_SHEET_NAME)) {
+    if (!names.includes(KD_SHEET_NAME)) {
       return { rows: [], errors: [`'${KD_SHEET_NAME}' 시트가 없습니다.`] };
     }
-    return parseKdOrder(sheetMatrix(wb, KD_SHEET_NAME));
+    return parseKdOrder(workbookMatrix(wb, KD_SHEET_NAME));
   }
-  const monthlySheet = wb.SheetNames.find((s) => s.includes('통합')) ?? wb.SheetNames[0];
-  return parseMonthlyForecast(sheetMatrix(wb, monthlySheet));
+  const monthlySheet = names.find((s) => s.includes('통합')) ?? names[0];
+  return parseMonthlyForecast(workbookMatrix(wb, monthlySheet));
 }
 
 /**
@@ -69,9 +63,9 @@ export async function uploadOrders(formData: FormData): Promise<UploadResult> {
     return { ok: false, message: '파일 종류를 인식하지 못했습니다(주간/KD/통합 파일명 필요).' };
   }
 
-  let wb: XLSX.WorkBook;
+  let wb: Workbook;
   try {
-    wb = XLSX.read(Buffer.from(await file.arrayBuffer()), { type: 'buffer' });
+    wb = await loadWorkbook(await file.arrayBuffer());
   } catch {
     return { ok: false, message: '엑셀 파일을 읽을 수 없습니다(손상되었을 수 있습니다).' };
   }

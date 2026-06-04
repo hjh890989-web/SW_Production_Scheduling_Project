@@ -1,6 +1,5 @@
 'use server';
 
-import * as XLSX from 'xlsx';
 import { revalidatePath } from 'next/cache';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/db';
@@ -10,7 +9,7 @@ import { SOURCE_TYPES, type SourceType } from '@/lib/orders/types';
 import { DEFAULT_MAPPING_RULES, parseColumnMapping, type MappingRule } from '@/lib/orders/mapping-defaults';
 import { detectSourceType } from '@/lib/orders/detect';
 import { applySiliconeFilter, unmatchedCodes } from '@/lib/orders/silicone-filter';
-import type { CellValue } from '@/lib/etl/excel';
+import { loadWorkbook, workbookMatrix, workbookSheetNames } from '@/lib/etl/excel';
 import { parseWeeklyPlan } from '@/lib/etl/weekly-plan-parser';
 import { parseKdOrder, KD_SHEET_NAME } from '@/lib/etl/kd-order-parser';
 import { parseMonthlyForecast } from '@/lib/etl/monthly-forecast-parser';
@@ -91,12 +90,6 @@ export interface SimulateResult {
   unmatched?: number;
 }
 
-function sheetMatrix(wb: XLSX.WorkBook, name: string): CellValue[][] {
-  const ws = wb.Sheets[name];
-  if (!ws) return [];
-  return XLSX.utils.sheet_to_json(ws, { header: 1, blankrows: false, defval: null }) as CellValue[][];
-}
-
 /** 매핑 시뮬레이션 (T3.7 — AC T3.7-2): 적재 없이 파싱/매핑 결과만 미리보기. */
 export async function simulateUpload(formData: FormData): Promise<SimulateResult> {
   const session = await auth();
@@ -110,13 +103,14 @@ export async function simulateUpload(formData: FormData): Promise<SimulateResult
   const sourceType = detectSourceType(file.name);
   if (!sourceType) return { ok: false, message: '파일 종류를 인식하지 못했습니다.' };
 
-  const wb = XLSX.read(Buffer.from(await file.arrayBuffer()), { type: 'buffer' });
+  const wb = await loadWorkbook(await file.arrayBuffer());
+  const names = workbookSheetNames(wb);
   const parsed =
     sourceType === 'weekly_plan'
-      ? parseWeeklyPlan(sheetMatrix(wb, wb.SheetNames[0]))
+      ? parseWeeklyPlan(workbookMatrix(wb, names[0]))
       : sourceType === 'kd'
-        ? parseKdOrder(sheetMatrix(wb, KD_SHEET_NAME))
-        : parseMonthlyForecast(sheetMatrix(wb, wb.SheetNames.find((s) => s.includes('통합')) ?? wb.SheetNames[0]));
+        ? parseKdOrder(workbookMatrix(wb, KD_SHEET_NAME))
+        : parseMonthlyForecast(workbookMatrix(wb, names.find((s) => s.includes('통합')) ?? names[0]));
 
   const filtered = await applySiliconeFilter(parsed.rows);
   return {
