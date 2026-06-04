@@ -13,9 +13,10 @@ function slotsOf(capacity: unknown): string[] {
   return ((capacity ?? {}) as { slots?: string[] }).slots ?? [];
 }
 
-export default async function MoldingPage({ searchParams }: { searchParams: { week?: string; highlightItem?: string } }) {
-  const weekStart = searchParams.week && /^\d{4}-\d{2}-\d{2}$/.test(searchParams.week)
-    ? weekMonday(searchParams.week)
+export default async function MoldingPage({ searchParams }: { searchParams: Promise<{ week?: string; highlightItem?: string }> }) {
+  const sp = await searchParams; // Next 16: searchParams는 async
+  const weekStart = sp.week && /^\d{4}-\d{2}-\d{2}$/.test(sp.week)
+    ? weekMonday(sp.week)
     : weekMonday('2026-05-18');
 
   const weekStartDate = new Date(`${weekStart}T00:00:00.000Z`);
@@ -40,7 +41,7 @@ export default async function MoldingPage({ searchParams }: { searchParams: { we
 
   const violationLabels = violations.map((v) => `${v.productCode} @ ${v.equipmentCode}/${v.slot} (${v.date})`);
   const summary = summarizeStatus(model.cells);
-  const highlightKeys = searchParams.highlightItem ? matchedCellKeys(model.cells, searchParams.highlightItem) : [];
+  const highlightKeys = sp.highlightItem ? matchedCellKeys(model.cells, sp.highlightItem) : [];
 
   return (
     <MoldingClient
@@ -50,7 +51,7 @@ export default async function MoldingPage({ searchParams }: { searchParams: { we
       violations={violationLabels}
       summary={summary}
       highlightKeys={highlightKeys}
-      highlightItem={searchParams.highlightItem}
+      highlightItem={sp.highlightItem}
     />
   );
 }

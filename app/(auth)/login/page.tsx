@@ -5,14 +5,15 @@ export const metadata: Metadata = {
   title: '로그인 · EVS 생산 스케줄링',
 };
 
-export default function LoginPage({
+export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: { callbackUrl?: string };
+  searchParams: Promise<{ callbackUrl?: string }>;
 }) {
+  const sp = await searchParams; // Next 16: searchParams는 async
   const callbackUrl =
-    typeof searchParams.callbackUrl === 'string' && searchParams.callbackUrl.startsWith('/')
-      ? searchParams.callbackUrl
+    typeof sp.callbackUrl === 'string' && sp.callbackUrl.startsWith('/')
+      ? sp.callbackUrl
       : '/';
 
   return (

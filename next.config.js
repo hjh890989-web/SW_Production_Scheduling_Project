@@ -8,12 +8,8 @@ const nextConfig = {
   async headers() {
     return [{ source: '/(.*)', headers: securityHeaders() }];
   },
-  webpack: (config) => {
-    // Workaround: Windows + path with spaces causes EISDIR on readlink for non-symlink files.
-    // Disabling symlink resolution avoids the misbehavior in enhanced-resolve.
-    config.resolve.symlinks = false;
-    return config;
-  },
+  // Next 16: Turbopack이 기본 빌드 엔진. (기존 webpack symlinks=false 워크어라운드는
+  // 공백 포함 경로 전용이었고 현재 경로엔 공백이 없어 제거 — 공백 경로 환경에선 turbopack 설정으로 대응)
 };
 
 module.exports = nextConfig;

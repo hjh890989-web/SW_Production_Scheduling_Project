@@ -11,13 +11,14 @@ export const dynamic = 'force-dynamic';
 export default async function AuditHistoryPage({
   searchParams,
 }: {
-  searchParams: { user?: string; table?: string; action?: string; from?: string; to?: string };
+  searchParams: Promise<{ user?: string; table?: string; action?: string; from?: string; to?: string }>;
 }) {
+  const sp = await searchParams; // Next 16: searchParams는 async
   const session = await auth();
   const userId = session?.user?.id ?? '';
   const canViewAll = hasPermission(session?.user, 'audit:read');
 
-  const where = buildAuditWhere(searchParams, canViewAll, userId);
+  const where = buildAuditWhere(sp, canViewAll, userId);
   const logs = await prisma.auditLog.findMany({ where, orderBy: { timestamp: 'desc' }, take: 200 });
 
   const rows: AuditRow[] = logs.map((l) => ({
@@ -45,24 +46,24 @@ export default async function AuditHistoryPage({
         {canViewAll && (
           <label className="flex flex-col">
             사용자ID
-            <input name="user" defaultValue={searchParams.user ?? ''} className="h-9 rounded border border-input px-2" />
+            <input name="user" defaultValue={sp.user ?? ''} className="h-9 rounded border border-input px-2" />
           </label>
         )}
         <label className="flex flex-col">
           테이블
-          <input name="table" defaultValue={searchParams.table ?? ''} className="h-9 rounded border border-input px-2" />
+          <input name="table" defaultValue={sp.table ?? ''} className="h-9 rounded border border-input px-2" />
         </label>
         <label className="flex flex-col">
           액션
-          <input name="action" defaultValue={searchParams.action ?? ''} className="h-9 rounded border border-input px-2" />
+          <input name="action" defaultValue={sp.action ?? ''} className="h-9 rounded border border-input px-2" />
         </label>
         <label className="flex flex-col">
           시작일
-          <input type="date" name="from" defaultValue={searchParams.from ?? ''} className="h-9 rounded border border-input px-2" />
+          <input type="date" name="from" defaultValue={sp.from ?? ''} className="h-9 rounded border border-input px-2" />
         </label>
         <label className="flex flex-col">
           종료일
-          <input type="date" name="to" defaultValue={searchParams.to ?? ''} className="h-9 rounded border border-input px-2" />
+          <input type="date" name="to" defaultValue={sp.to ?? ''} className="h-9 rounded border border-input px-2" />
         </label>
         <button type="submit" className="h-9 rounded-md bg-primary px-4 font-medium text-primary-foreground">
           검색

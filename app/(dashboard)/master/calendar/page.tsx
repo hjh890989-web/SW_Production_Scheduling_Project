@@ -26,11 +26,12 @@ function clamp(year: number, month: number): { year: number; month: number } {
 export default async function CalendarMasterPage({
   searchParams,
 }: {
-  searchParams: { year?: string; month?: string };
+  searchParams: Promise<{ year?: string; month?: string }>;
 }) {
+  const sp = await searchParams; // Next 16: searchParams는 async
   const { year, month } = clamp(
-    Number(searchParams.year) || 2026,
-    Number(searchParams.month) || 6,
+    Number(sp.year) || 2026,
+    Number(sp.month) || 6,
   );
 
   const monthStart = new Date(Date.UTC(year, month - 1, 1));
