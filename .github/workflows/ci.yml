@@ -78,6 +78,9 @@ jobs:
       - run: npm ci
       - name: Prisma client 생성
         run: npx prisma generate
+      # 이 프로젝트는 마이그레이션 파일이 없는 schema-first(SQLite) — 시드 전 db push로 스키마 생성.
+      - name: DB 스키마 생성 (db push)
+        run: npx prisma db push --skip-generate
       - name: DB 시드 (SQLite — 6 사용자·47품번·장비·캘린더)
         run: npx prisma db seed
       - name: Playwright 크로미움 설치
