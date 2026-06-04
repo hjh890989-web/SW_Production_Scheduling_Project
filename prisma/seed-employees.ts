@@ -15,7 +15,7 @@ import { hashPassword } from '../lib/auth/password';
  *   - 그 외(개발·재무·일반 사원 등)  → 제외
  * 초기 PIN은 0000(전원 강제 변경 권장). 엑셀이 없으면(다른 환경·CI) 생략한다.
  */
-const XLSX_PATH = path.resolve(process.cwd(), '결재선 정보.xlsx');
+const XLSX_PATH = path.resolve(process.cwd(), '_local', '결재선 정보.xlsx');
 const INITIAL_PIN = '0000';
 
 export function mapEmployeeRole(dept: string, position: string): string | null {
