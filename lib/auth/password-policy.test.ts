@@ -1,21 +1,22 @@
 import { describe, it, expect } from 'vitest';
 import { validatePasswordPolicy, isPasswordChangeDue } from './password-policy';
 
-describe('validatePasswordPolicy (T1.5)', () => {
-  it('AC T1.5-1: "Test1234!" 정책 통과', () => {
-    expect(validatePasswordPolicy('Test1234!').valid).toBe(true);
+describe('validatePasswordPolicy (T1.5 — 4자리 숫자 PIN)', () => {
+  it('AC T1.5-1: 4자리 PIN("0000"·"1234") 통과', () => {
+    expect(validatePasswordPolicy('0000').valid).toBe(true);
+    expect(validatePasswordPolicy('1234').valid).toBe(true);
   });
 
-  it('AC T1.5-F1: "1234" 약한 비밀번호 거부 + 사유', () => {
-    const r = validatePasswordPolicy('1234');
+  it('AC T1.5-F1: 4자리가 아니면 거부 + 사유', () => {
+    const r = validatePasswordPolicy('123');
     expect(r.valid).toBe(false);
     expect(r.errors.length).toBeGreaterThan(0);
   });
 
-  it('영문만/숫자만/특수만은 거부', () => {
-    expect(validatePasswordPolicy('abcdefgh').valid).toBe(false);
-    expect(validatePasswordPolicy('12345678').valid).toBe(false);
-    expect(validatePasswordPolicy('!!!!!!!!').valid).toBe(false);
+  it('숫자가 아니거나 길이가 다르면 거부', () => {
+    expect(validatePasswordPolicy('abcd').valid).toBe(false);
+    expect(validatePasswordPolicy('12345').valid).toBe(false);
+    expect(validatePasswordPolicy('Test1234!').valid).toBe(false);
   });
 });
 

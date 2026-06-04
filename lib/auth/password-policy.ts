@@ -1,9 +1,9 @@
 /**
- * 비밀번호 정책 (T1.5 — 부록 G.1 인증 정책).
- * 8자 이상 + 영문 + 숫자 + 특수문자.
+ * 비밀번호 정책 — 4자리 숫자 PIN (개인 사번 로그인 체계; 참조: Check In EAS/FCB 동일 정책).
+ * 약한 PIN이지만 5회 실패 잠금(lockout) + bcrypt 해싱으로 보완한다.
  */
-export const PASSWORD_POLICY_MESSAGE =
-  '비밀번호는 8자 이상이며 영문·숫자·특수문자를 모두 포함해야 합니다.';
+export const PIN_LENGTH = 4;
+export const PASSWORD_POLICY_MESSAGE = `비밀번호는 ${PIN_LENGTH}자리 숫자(PIN)여야 합니다.`;
 
 /** 90일 변경 주기 (부록 G.1). */
 export const PASSWORD_MAX_AGE_DAYS = 90;
@@ -13,12 +13,11 @@ export interface PasswordPolicyResult {
   errors: string[];
 }
 
+const PIN_RE = new RegExp(`^\\d{${PIN_LENGTH}}$`);
+
 export function validatePasswordPolicy(password: string): PasswordPolicyResult {
   const errors: string[] = [];
-  if (password.length < 8) errors.push('8자 이상이어야 합니다.');
-  if (!/[A-Za-z]/.test(password)) errors.push('영문을 포함해야 합니다.');
-  if (!/[0-9]/.test(password)) errors.push('숫자를 포함해야 합니다.');
-  if (!/[^A-Za-z0-9]/.test(password)) errors.push('특수문자를 포함해야 합니다.');
+  if (!PIN_RE.test(password)) errors.push(`${PIN_LENGTH}자리 숫자(PIN)여야 합니다.`);
   return { valid: errors.length === 0, errors };
 }
 

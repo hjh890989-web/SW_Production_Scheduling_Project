@@ -14,14 +14,14 @@ test.afterAll(async () => {
 
 async function login(page: Page, username: string, password: string) {
   await page.goto('/login');
-  await page.getByLabel('아이디').fill(username);
-  await page.getByLabel('비밀번호', { exact: true }).fill(password);
+  await page.getByLabel('사번').fill(username);
+  await page.getByLabel('비밀번호 (4자리 PIN)').fill(password);
   await page.getByRole('button', { name: '로그인' }).click();
   await expect(page).not.toHaveURL(/\/login/);
 }
 
 test('압출 반장 이영호 → W-5 진입 + 자동 생성/확정 버튼', async ({ page }) => {
-  await login(page, 'leeyh', 'Test1234!');
+  await login(page, '90000003', '0000');
   await page.goto('/extrusion');
   await expect(page.getByRole('heading', { name: /압출 스케줄/ })).toBeVisible({ timeout: 10_000 });
   await expect(page.getByRole('button', { name: /자동 스케줄 생성/ })).toBeVisible();
@@ -30,7 +30,7 @@ test('압출 반장 이영호 → W-5 진입 + 자동 생성/확정 버튼', asy
 
 test('AC ER-1: 자동 생성 → EXTRUSION_SCHEDULE_GENERATED audit + 다이/노즐 카드', async ({ page }) => {
   const before = await prisma.auditLog.count({ where: { action: 'EXTRUSION_SCHEDULE_GENERATED' } });
-  await login(page, 'kimms', 'Test1234!'); // 생산관리(extrusion:write 보유)
+  await login(page, '90000001', '0000'); // 생산관리(extrusion:write 보유)
   await page.goto('/extrusion');
   await page.getByRole('button', { name: /자동 스케줄 생성/ }).click();
   await expect(page.getByText(/자동 생성 완료/)).toBeVisible({ timeout: 15_000 });
@@ -45,7 +45,7 @@ test('AC ER-1: 자동 생성 → EXTRUSION_SCHEDULE_GENERATED audit + 다이/노
 });
 
 test('AC ER-2-3: 확정 → CONFIRMED audit', async ({ page }) => {
-  await login(page, 'kimms', 'Test1234!');
+  await login(page, '90000001', '0000');
   await page.goto('/extrusion');
   const cells = await prisma.extrusionSchedule.count();
   test.skip(cells < 1, '압출 셀 없음(성형 스케줄 선행 필요) — 확정 시나리오 생략');

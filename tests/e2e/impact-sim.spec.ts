@@ -6,14 +6,14 @@ import { test, expect, type Page } from '@playwright/test';
  */
 async function login(page: Page, username: string, password: string) {
   await page.goto('/login');
-  await page.getByLabel('아이디').fill(username);
-  await page.getByLabel('비밀번호', { exact: true }).fill(password);
+  await page.getByLabel('사번').fill(username);
+  await page.getByLabel('비밀번호 (4자리 PIN)').fill(password);
   await page.getByRole('button', { name: '로그인' }).click();
   await expect(page).not.toHaveURL(/\/login/);
 }
 
 test('AC PM-1-1/KSF-3: W-3 품번 입력 → ≤5초 영향 시뮬 패널', async ({ page }) => {
-  await login(page, 'kimms', 'Test1234!');
+  await login(page, '90000001', '0000');
   await page.goto('/orders/change');
   const start = Date.now();
   await page.getByLabel('품번').fill('25490-03HA0');
@@ -23,7 +23,7 @@ test('AC PM-1-1/KSF-3: W-3 품번 입력 → ≤5초 영향 시뮬 패널', asyn
 });
 
 test('AC PM-1-2: 영향 카드 → W-4/W-5 하이라이트 링크 이동', async ({ page }) => {
-  await login(page, 'kimms', 'Test1234!');
+  await login(page, '90000001', '0000');
   await page.goto('/orders/change');
   await page.getByLabel('품번').fill('25490-03HA0');
 

@@ -104,3 +104,10 @@ temp/
 # ----- 보안 스캔 결과 -----
 .gitleaks-report.json
 trivy-report.*
+
+# ----- 실제 사원 데이터 (실데이터 — 사내망 전용, git/외부 export 금지: CLAUDE §5) -----
+*결재선*.xlsx
+data/standard_imformation/
+
+# ----- 로고 원본(루트, public/check-in-*.svg에 복사본 유지) -----
+/cheek-in-*.svg

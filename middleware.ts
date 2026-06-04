@@ -20,14 +20,15 @@ export default auth((req) => {
 
   // SEC: per-request nonce → CSP에서 script-src 'unsafe-inline' 제거(XSS 방어).
   const nonce = btoa(crypto.randomUUID());
-  const csp = buildCsp(nonce);
+  // dev는 React 디버깅(eval)·HMR이 CSP에 막히지 않도록 미적용. prod에서만 엄격 적용(E2E는 prod 대상이라 CSP 검증 유지).
+  const csp = process.env.NODE_ENV === 'production' ? buildCsp(nonce) : null;
   // Next가 요청 헤더의 CSP에서 nonce를 읽어 부트스트랩 <script>에 nonce를 부여한다.
   const requestHeaders = new Headers(req.headers);
   requestHeaders.set('x-nonce', nonce);
-  requestHeaders.set('content-security-policy', csp);
+  if (csp) requestHeaders.set('content-security-policy', csp);
 
   const withCsp = (res: NextResponse): NextResponse => {
-    res.headers.set('content-security-policy', csp);
+    if (csp) res.headers.set('content-security-policy', csp);
     return res;
   };
 
@@ -51,6 +52,6 @@ export default auth((req) => {
 });
 
 export const config = {
-  // 정적 자원·api·sw·manifest만 제외(스크립트 nonce 불필요). login/forbidden/offline은 포함해 CSP를 적용.
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|sw.js|manifest.webmanifest).*)'],
+  // 정적 자원·api·sw·manifest·이미지(public 로고 등)는 제외(인증·nonce 불필요). login/forbidden/offline은 포함해 CSP를 적용.
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|sw.js|manifest.webmanifest|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)).*)'],
 };

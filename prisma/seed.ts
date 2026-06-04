@@ -6,6 +6,7 @@ import { seedEquipment } from './seed-equipment';
 import { seedOperationParams } from './seed-operation-params';
 import { seedCalendar } from './seed-calendar';
 import { seedMaterialItems } from './seed-materials';
+import { seedEmployees } from './seed-employees';
 
 /**
  * 초기 사용자 시드 (T1.7). `npx prisma db seed`로 실행.
@@ -21,7 +22,7 @@ async function main(): Promise<void> {
       const passwordHash = await hashPassword(u.password);
       await prisma.user.upsert({
         where: { username: u.username },
-        update: { name: u.name, role: u.role, email: u.email },
+        update: { name: u.name, role: u.role, email: u.email, passwordHash, passwordChangedAt: new Date() },
         create: {
           username: u.username,
           email: u.email,
@@ -33,7 +34,10 @@ async function main(): Promise<void> {
       });
       console.log(`  ✓ ${u.username} (${u.role})`);
     }
-    console.log(`✅ 시드 완료: ${SEED_USERS.length} 사용자`);
+    console.log(`✅ 시드 완료: ${SEED_USERS.length} 합성/관리 계정 (admin·9000000X)`);
+
+    const empCount = await seedEmployees(prisma);
+    console.log(`✅ 시드 완료: ${empCount} 실사원 (결재선 엑셀 — 선별·매핑)`);
 
     const itemCount = await seedItems(prisma);
     console.log(`✅ 시드 완료: ${itemCount} 품번 (실리콘)`);
