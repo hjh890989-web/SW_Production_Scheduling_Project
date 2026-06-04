@@ -38,6 +38,7 @@
 |---|---|---|---|
 | **HIGH** | 낙관적 락 5 call sites(`move-actions`·`extrusion/move-actions`·`equipment-actions`×2·`item-actions`) | JS TOCTOU 비교 → **DB 원자 CAS**(`updateMany({where:{id, updatedAt}})`, `count===0`→충돌) | 5종 게이트 통과 + dev 기동 시 스케줄/마스터 페이지 정상 렌더(해피패스). 충돌 경로는 DB count 기반(결정적) |
 | **HIGH** | `auth.ts`·`auth.config`(types)·`lib/actions/password.ts` | **sessionVersion 집행** — 비번 변경 시 `sessionVersion` 증가, Node jwt 콜백에서 DB값과 비교해 무효화(fail-open). 판정은 `lib/auth/session-revocation.ts` 순수+테스트 | **dev 기동 검증**: 로그인 정상(매 요청 DB조회 추가가 인증 안 깸) → DB sessionVersion 증가 → **구 토큰 role·name 즉시 소거(무효화)** → 복원 시 재유효 확인 |
+| **HIGH** | `middleware.ts`·`lib/security/headers.js` | **CSP nonce** — `script-src`에서 `'unsafe-inline'` 제거, 미들웨어 per-request nonce + `'strict-dynamic'`. CSP는 미들웨어 동적 설정으로 이전(next.config 정적 CSP 제거), `/offline`은 nonce 위해 force-dynamic | **prod standalone 기동 검증**: 모든 페이지 `<script>`가 CSP 헤더 nonce와 **전수 일치**(`/login` 13/13·`/` 17/17·`/molding` 20/20·`/offline` 11/11) → 스크립트 실행 허용·렌더 정상. un-nonced 인라인 스크립트 0 |
 
 > ⚠️ **sessionVersion 잔여 한계**: 미들웨어(Edge)는 Prisma 불가라 DB 비교 미적용 → **페이지 열람** 차단은 Node 레이어(페이지 렌더·서버액션 권한)에서만 강제(변경/권한작업은 차단됨, 빈 익명 세션). 미들웨어 레벨 차단까지 원하면 DB 세션 전략 또는 내부 Node API 경유 검증으로 후속 확장 권장.
 
@@ -50,7 +51,6 @@
 | 심각도 | 위치 | 문제 | 권장 수정 | 이연 사유 |
 |---|---|---|---|---|
 | **HIGH** | `app/api/mes/result/route.ts:60-62`, `sync-service.ts:47-48` | ProductionResult create + 재고 갱신 비원자 → 부분 실패 시 재고 누락(멱등 skip이 영구화). #6/#7로 경합·롤백은 완화했으나 **두 쓰기의 원자성**은 미해결 | 두 쓰기를 단일 `$transaction`(tx 공유)로 묶기 | 트랜잭션 중첩·`headers()`/audit 상호작용 런타임 검증 필요 |
-| **HIGH** | `lib/security/headers.js` | `script-src 'unsafe-inline'`이 CSP의 XSS 방어를 무력화 | 미들웨어 per-request nonce + `'strict-dynamic'`, `'unsafe-inline'` 제거 | Next App Router nonce 적용은 앱 구동 회귀 검증 필수(렌더 깨짐 위험) |
 | **MED** | `lib/orders/upload.ts` | 동일 파일 재업로드 시 ACTIVE 주문 **중복 적재**(supersede/dedup 없음) | 자연키 `@@unique` 또는 업로드 트랜잭션 내 기존 ACTIVE supersede | supersede 범위(품번/소스/전체)는 **제품 결정** 필요 |
 | **MED** | `lib/orders/upload.ts`, `mapping-actions.ts` | 업로드 MIME/매직바이트·행수 상한 없음(zip-bomb/DoS), `simulateUpload`는 size 제한도 없음 | 매직바이트 검사 + `sheetRows` 상한 + 공용 read 헬퍼 | 파서 동작 회귀 검증 권장 |
 | **MED** | `xlsx@0.18.5` | CVE-2023-30533(proto pollution)·ReDoS — npm에 패치 버전 없음 | SheetJS 공식 CDN 패치본 핀 또는 `exceljs` 이관 | 의존성 교체/마이그레이션은 별도 작업 |
@@ -65,5 +65,6 @@
 ---
 
 ## 메모
-- 이연 항목 중 **sessionVersion 집행 · 낙관적 락 DB CAS · CSP nonce**가 우선순위 높음 — 사내 서버에서 앱 구동 가능해지면 별도 PR로 검증하며 적용 권장.
+- ✅ 우선순위 HIGH 3건(**sessionVersion 집행 · 낙관적 락 DB CAS · CSP nonce**)은 앱 구동 런타임 검증과 함께 **적용 완료**(위 "추가 수정" 표).
+- 남은 우선순위: MES create+재고 **트랜잭션 원자성**, **xlsx 패치본 이관**(→ CI audit 차단 승격), 업로드 supersede/MIME, audit 내구성.
 - 본 라운드는 "외부 입력 표면 + 교차 사용자 노출 + 데이터 무결성"의 즉시 수정 가능분에 집중했다.
