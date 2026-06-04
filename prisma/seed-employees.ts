@@ -63,6 +63,7 @@ export async function seedEmployees(prisma: PrismaClient): Promise<number> {
           role,
           passwordHash: pinHash,
           passwordChangedAt: new Date(),
+          mustChangePassword: true, // 실사원은 초기 PIN(0000) 첫 로그인 시 변경 강제
         },
       });
       count += 1;

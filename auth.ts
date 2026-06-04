@@ -84,6 +84,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           name: user.name,
           role: user.role as Role,
           sessionVersion: user.sessionVersion,
+          mustChangePassword: user.mustChangePassword,
         };
       },
     }),
@@ -97,6 +98,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.id = user.id as string;
         token.role = (user as { role?: Role }).role;
         token.sv = (user as { sessionVersion?: number }).sessionVersion ?? 0;
+        token.mcp = (user as { mustChangePassword?: boolean }).mustChangePassword ?? false;
         return token;
       }
       const tokenId = token.id as string | undefined;

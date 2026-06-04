@@ -12,12 +12,7 @@ import { Label } from '@/components/ui/label';
 const schema = z
   .object({
     currentPassword: z.string().min(1, { message: '현재 비밀번호를 입력하세요.' }),
-    newPassword: z
-      .string()
-      .min(8, { message: '8자 이상이어야 합니다.' })
-      .regex(/[A-Za-z]/, { message: '영문을 포함해야 합니다.' })
-      .regex(/[0-9]/, { message: '숫자를 포함해야 합니다.' })
-      .regex(/[^A-Za-z0-9]/, { message: '특수문자를 포함해야 합니다.' }),
+    newPassword: z.string().regex(/^\d{4}$/, { message: '새 비밀번호는 4자리 숫자(PIN)입니다.' }),
     confirmPassword: z.string(),
   })
   .refine((v) => v.newPassword === v.confirmPassword, {

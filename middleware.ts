@@ -39,6 +39,10 @@ export default auth((req) => {
       url.searchParams.set('callbackUrl', `${pathname}${search}`);
       return withCsp(NextResponse.redirect(url));
     }
+    // 1.5) 초기 PIN 강제 변경 — 미변경 사용자는 비밀번호 변경 페이지로만(실사원 첫 로그인)
+    if (session.user.mustChangePassword && pathname !== '/account/password') {
+      return withCsp(NextResponse.redirect(new URL('/account/password', origin)));
+    }
     // 2) 페이지별 RBAC — 권한 미충족 → /forbidden (audit는 forbidden 서버 컴포넌트에서 기록)
     const permission = requiredPermission(pathname);
     if (permission && !hasPermission(session.user, permission)) {

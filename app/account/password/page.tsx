@@ -25,6 +25,12 @@ export default async function ChangePasswordPage() {
         <p className="mt-1 text-base text-muted-foreground">{PASSWORD_POLICY_MESSAGE}</p>
       </div>
 
+      {session.user.mustChangePassword && (
+        <p className="rounded-md bg-blue-50 p-3 text-sm text-blue-800" role="status">
+          초기 비밀번호(0000)를 사용 중입니다. 새 4자리 PIN으로 변경해야 다른 화면을 이용할 수 있습니다.
+        </p>
+      )}
+
       {due && (
         <p className="rounded-md bg-amber-50 p-3 text-sm text-amber-800" role="status">
           비밀번호를 변경한 지 90일이 지났습니다. 보안을 위해 변경을 권장합니다.
