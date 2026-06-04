@@ -36,6 +36,10 @@
 - ✅ Stage_C PRD v1.4 + **WBS v1.1** (13 Sprint × **117 Task**, T0.8/T5.12 추가) + ADR D-22/D-25 — [Stage_C/](Stage_C/)
 - ✅ Stage_D 115개 GitHub Issue 명세서 (T0.1 ~ T12.7.4) — [Stage_D/issues/](Stage_D/issues/)
 - ✅ **Sprint 0~12 구현 완료** — 코드 검증 가능 task 전부 main에 선형 머지(테스트 350 통과). `/goal` 자동 루프(task별 feature 브랜치 + 5종 게이트 exit 0 + 스택 PR → 통합 squash 머지)로 진행.
+- ✅ **(2026-06-04) 출시 전 하드닝·현행화·로그인 개편** — Sprint 0~12 머지 후 main에서 추가 진행(#103~#126, 테스트 363·CI 3잡 green):
+  - 보안·품질(#103~#110): 인프라 산출물 materialize, 보안 리뷰 15건 반영, 낙관적 락 DB CAS·sessionVersion 집행, CI 5종 게이트+의존성 audit, CSP per-request nonce(`unsafe-inline` 제거), MES 적재 원자성, xlsx→exceljs, **Next 14→16**
+  - 테스트·의존성(#116~#123): **E2E 11스펙 CI 스모크 통합**(prod 대상 42 pass), eslint 8→9 flat config, zod 3→4, GitHub Actions 메이저
+  - 로그인 개편·브랜딩(#124~#126): **사번 8자리/PIN 4자리 로그인**(참조 Check In EAS/FCB), 결재선 엑셀 실사원 27명 선별·부서/직위 6 Role 매핑 적재(실데이터 gitignore), Check In 로고·기어 파비콘, 초기 PIN 강제 변경(`mustChangePassword`), 로그아웃·전 페이지 메인 로고 푸터
 - 🔜 **남은 작업 = 인프라 적용(코드 외)** — Sprint 11/12에서 실행 불가로 **런북 이연**한 항목을 사내 서버에서 적용:
   - 출시 인프라([docs/operations.md](docs/operations.md)): 사내 서버 배포(compose·nginx·HTTPS)·Sentry self-hosted·Grafana KSF 대시보드·k6 부하·Lighthouse CI·백업/복구/Audit 5년 아카이빙
   - Phase 2 외부서비스([docs/operations-phase2.md](docs/operations-phase2.md)): OR-Tools 솔버(FastAPI)·Ollama LLM(사내)·AD/LDAP SSO — 코드 측 추상화(`ISolverEngine`·`ILlmProvider`)는 머지 완료, 실 서비스 도입 시 Mock만 교체
@@ -70,6 +74,7 @@
 - **Auth.js v5** (NextAuth 후속) — Credentials provider + bcrypt(12)
 - 사내 LDAP 연동은 Phase 2 (T12.x), 초기는 자체 사용자 테이블
 - RBAC 6 Role: Admin / Manager / Sales / Material / ExtrusionForeman / MoldingForeman
+- 로그인(2026-06-04~): 아이디=개인 사번 8자리 숫자(`admin` 예외), 비밀번호=4자리 숫자 PIN(초기 `0000` → 첫 로그인 시 강제 변경 `mustChangePassword`). 참조 Check In EAS/FCB. 실사원은 결재선 엑셀에서 적재(`prisma/seed-employees.ts`, 실데이터 gitignore)
 - 5회 실패 시 계정 잠금, 세션은 secure cookie + SameSite=Strict + AuditLog IP/sessionId
 
 ### External Integrations
