@@ -1,3 +1,4 @@
+import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { logAudit } from '@/lib/audit';
 import { createNotification } from '@/lib/notify';
@@ -22,35 +23,39 @@ export interface InventoryUpdateResult {
 }
 
 /**
- * T9.3 — 실적 적재 시 재고 갱신. 음수면 롤백 + 경고 로그 + Admin 알림.
- * delta>=0 생산: DB 원자 increment(SEC: read-modify-write 경합/lost update 제거).
- * delta<0 납품: 음수 가드를 위해 트랜잭션 내 검사(납품 경로는 현재 미가동).
+ * 주어진 트랜잭션(tx) 위에서 재고만 변경(audit/notify 없음). 호출자가 같은 tx에 ProductionResult
+ * 등 다른 쓰기를 묶어 **부분 실패 시 함께 롤백**시키기 위함(SEC: create+재고 비원자 drift 제거).
+ * delta>=0 원자 increment, delta<0 음수 가드(throw NegativeInventoryError). 갱신된 수량 반환.
+ */
+export async function applyInventoryDeltaTx(
+  tx: Prisma.TransactionClient,
+  itemId: string,
+  delta: number,
+): Promise<number> {
+  if (delta >= 0) {
+    // 원자 증감 — 동시 호출에도 lost update 없음(증가는 항상 음수 불가).
+    const inv = await tx.inventory.upsert({
+      where: { itemId },
+      create: { itemId, quantity: delta },
+      update: { quantity: { increment: delta } },
+    });
+    return inv.quantity;
+  }
+  const inv = await tx.inventory.findUnique({ where: { itemId } });
+  const current = inv?.quantity ?? 0;
+  const { next, negative } = applyInventoryDelta(current, delta);
+  if (negative) throw new NegativeInventoryError(itemId, next);
+  await tx.inventory.upsert({ where: { itemId }, create: { itemId, quantity: next }, update: { quantity: next } });
+  return next;
+}
+
+/**
+ * T9.3 — 실적 적재 시 재고 갱신(단독 호출용: 자체 트랜잭션 + audit/notify). 음수면 롤백 + Admin 알림.
+ * create와 한 묶음으로 묶으려면 호출자가 직접 $transaction에서 applyInventoryDeltaTx를 쓴다.
  */
 export async function applyInventoryChange(itemId: string, delta: number): Promise<InventoryUpdateResult> {
   try {
-    let quantity: number;
-    if (delta >= 0) {
-      // 원자 증감 — 동시 호출에도 lost update 없음(증가는 항상 음수 불가).
-      const inv = await prisma.inventory.upsert({
-        where: { itemId },
-        create: { itemId, quantity: delta },
-        update: { quantity: { increment: delta } },
-      });
-      quantity = inv.quantity;
-    } else {
-      quantity = await prisma.$transaction(async (tx) => {
-        const inv = await tx.inventory.findUnique({ where: { itemId } });
-        const current = inv?.quantity ?? 0;
-        const { next, negative } = applyInventoryDelta(current, delta);
-        if (negative) throw new NegativeInventoryError(itemId, next);
-        await tx.inventory.upsert({
-          where: { itemId },
-          create: { itemId, quantity: next },
-          update: { quantity: next },
-        });
-        return next;
-      });
-    }
+    const quantity = await prisma.$transaction((tx) => applyInventoryDeltaTx(tx, itemId, delta));
 
     await logAudit({
       action: 'INVENTORY_UPDATED',
