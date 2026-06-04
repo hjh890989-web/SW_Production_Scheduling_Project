@@ -52,7 +52,7 @@ test('MR-2 ⭐ J-MR-2: 성형 슬롯 그리드 표시(드래그 재배분 대상
   await login(page, 'parkcs', 'Test1234!');
   await page.goto('/molding');
   // 그리드 또는 시드 안내 — 핵심은 W-4 진입·렌더 성공(드래그 재배분 UI 진입점)
-  await expect(page.getByText(/가류기|성형 장비 시드/)).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText(/가류기|성형 장비 시드/).first()).toBeVisible({ timeout: 10_000 });
 });
 
 test('MR-3: 성형 상태 요약(자동/수동/확정)', async ({ page }) => {

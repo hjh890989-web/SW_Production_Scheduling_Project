@@ -11,7 +11,8 @@ export default defineConfig({
   expect: { timeout: 5_000 },
   fullyParallel: false,
   workers: 1,
-  retries: 0,
+  // 공유 SQLite DB(감사 카운트·잠금)를 변경하므로 직렬 실행 유지. CI 일시 flake는 재시도로 흡수.
+  retries: process.env.CI ? 2 : 0,
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL: 'http://localhost:3000',
@@ -21,9 +22,11 @@ export default defineConfig({
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
-    command: 'npm run dev',
+    // CI는 프로덕션 빌드(next start)를 대상으로 — dev의 라우트별 온디맨드 컴파일 지연(flake) 회피.
+    // 로컬은 dev로 빠른 반복. CI에서는 사전 `npm run build` 후 이 명령이 .next를 사용한다.
+    command: process.env.CI ? 'npm run start' : 'npm run dev',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
+    timeout: 180_000,
   },
 });
