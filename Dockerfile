@@ -13,7 +13,8 @@ COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN npx prisma generate
+# prod 이미지는 PostgreSQL — provider 치환한 schema.prod.prisma로 client 생성(dev는 SQLite 유지)
+RUN node scripts/prisma-prod-schema.mjs && npx prisma generate --schema prisma/schema.prod.prisma
 RUN npm run build
 
 # ----- Stage 3: runner -----

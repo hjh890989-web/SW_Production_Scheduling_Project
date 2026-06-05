@@ -10,7 +10,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "prisma:prod-schema": "node scripts/prisma-prod-schema.mjs",
+    "db:push:prod": "node scripts/prisma-prod-schema.mjs && prisma db push --schema prisma/schema.prod.prisma"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",

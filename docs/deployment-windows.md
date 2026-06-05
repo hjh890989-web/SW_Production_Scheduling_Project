@@ -12,7 +12,7 @@
 | 안 | 적합 | 필요 작업 |
 |---|---|---|
 | **A. SQLite (권장 — 20명 단일 PC)** | 즉시 배포, 운영 단순 | compose에서 postgres 제거 + app을 SQLite 볼륨으로(별도 override 제공 예정). 코드 변경 0 |
-| **B. PostgreSQL (정석/확장 대비)** | 동시성·대용량 | `schema.prisma` provider를 `postgresql`로 변경 + `prisma db push`(별도 PR). dev(SQLite)와 분리 |
+| **B. PostgreSQL (정석/확장)** | 동시성·대용량 | ✅ 준비됨 — `npm run db:push:prod`가 provider 치환 prod schema 생성 + Postgres db push. dev·테스트·CI는 SQLite 유지(분리 완료). Dockerfile도 prod schema로 client 생성 |
 
 > 👉 이 문서는 공통 절차다. **A/B 결정 후** compose/schema 보강분을 반영한다(아래 5·6단계 분기).
 
@@ -60,7 +60,16 @@ npx prisma db push                              # 스키마 → DB
 npx prisma db seed                              # 마스터(품번·장비·캘린더)
 npx tsx prisma/seed-employees.ts                # 실사원(결재선 엑셀, _local 필요)
 ```
-> B안은 `docker compose ... up -d postgres` 로 postgres만 먼저 띄운 뒤 `prisma db push`.
+> **B안(Postgres)** 권장 순서:
+> ```powershell
+> docker compose -f infrastructure/docker-compose.prod.yml --env-file .env.prod up -d postgres
+> $env:DATABASE_URL = "postgresql://evs:<PW>@localhost:5432/evs?schema=public"
+> npm install
+> npm run db:push:prod          # provider 치환 prod schema 생성 + Postgres에 db push
+> npx prisma db seed            # 마스터
+> npx tsx prisma/seed-employees.ts   # 실사원
+> ```
+> 그 뒤 6단계로 전체 스택 기동. (db push는 호스트에서 1회 — app 컨테이너는 client만 포함)
 
 ## 6. 스택 기동
 ```powershell
@@ -94,6 +103,11 @@ docker compose -f infrastructure/docker-compose.prod.yml ps   # 전 서비스 he
 
 ---
 
-## 다음 보강 (A/B 결정 후 코드 반영)
-- A안: `docker-compose.prod.sqlite.yml`(postgres 제거 + app SQLite 볼륨) 추가
-- B안: `schema.prisma` provider `postgresql` 전환 PR(dev/prod 분리 전략 포함)
+## DB 분리 전략 (B안 — 구현 완료)
+- **모델은 단일 소스** `prisma/schema.prisma`(SQLite, dev·테스트·CI 유지)
+- `npm run prisma:prod-schema` → `scripts/prisma-prod-schema.mjs`가 provider만 `postgresql`로 치환해 `prisma/schema.prod.prisma` 생성(gitignore, 생성물)
+- `npm run db:push:prod` → 위 생성 + `prisma db push --schema schema.prod.prisma`
+- **Dockerfile**: prod 이미지 build 시 prod schema로 `prisma generate`(Postgres client). dev 로컬은 SQLite client 그대로
+- 모델 변경 시 schema.prisma만 고치면 prod schema는 자동 반영(치환만 하므로)
+
+> A안(SQLite)으로 가려면 `docker-compose.prod.sqlite.yml`(postgres 제거 + app SQLite 볼륨)을 추가하면 된다(현재는 B안 기준).
