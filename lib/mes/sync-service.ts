@@ -1,4 +1,4 @@
-import cron from 'node-cron';
+import cron, { type ScheduledTask } from 'node-cron';
 import { prisma } from '@/lib/db';
 import { logAudit } from '@/lib/audit';
 import { createNotification } from '@/lib/notify';
@@ -105,7 +105,7 @@ export async function processRetryQueue(client: IMesClient = createMesClient(), 
 let registered = false;
 
 /** 5분 주기 cron 등록 (서버 기동 시 호출). 빌드/테스트 시 자동 실행되지 않는다. */
-export function registerMesCron(): cron.ScheduledTask {
+export function registerMesCron(): ScheduledTask {
   if (registered) throw new Error('MES cron already registered');
   registered = true;
   return cron.schedule(POLL_CRON, () => {

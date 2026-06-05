@@ -1,4 +1,4 @@
-import cron from 'node-cron';
+import cron, { type ScheduledTask } from 'node-cron';
 import { runErpSync } from './sync-service';
 import { ERP_SYNC_CRON } from './cron-schedule';
 import { registerKsfCron } from '@/lib/cron/ksf-snapshot';
@@ -13,7 +13,7 @@ import { registerMesCron } from '@/lib/mes/sync-service';
 let erpRegistered = false;
 
 /** ERP cron 단독 등록 (서버 기동 시 호출, 빌드/테스트 시 미실행). */
-export function registerErpCron(): cron.ScheduledTask {
+export function registerErpCron(): ScheduledTask {
   if (erpRegistered) throw new Error('ERP cron already registered');
   erpRegistered = true;
   return cron.schedule(ERP_SYNC_CRON, () => {
@@ -24,6 +24,6 @@ export function registerErpCron(): cron.ScheduledTask {
 /**
  * 통합 스케줄 등록 — KSF(23:55 UTC) + MES(5분) + ERP(03:00 KST). 운영 엔트리에서 1회 호출.
  */
-export function registerScheduledJobs(): cron.ScheduledTask[] {
+export function registerScheduledJobs(): ScheduledTask[] {
   return [registerKsfCron(), registerMesCron(), registerErpCron()];
 }
