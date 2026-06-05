@@ -1,0 +1,6 @@
+# 임시 override — 호스트에서 prisma db push/seed 하기 위해 postgres 5432를 로컬에만 노출.
+# 초기화 1회용. 운영 기동 시에는 이 파일을 빼고 docker compose up (내부 네트워크만 사용).
+services:
+  postgres:
+    ports:
+      - '127.0.0.1:5432:5432'

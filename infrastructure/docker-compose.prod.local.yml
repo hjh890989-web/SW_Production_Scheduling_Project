@@ -1,0 +1,8 @@
+# 이 PC 로컬 실행용 override — 앱을 호스트 포트 5002로 직접 노출(HTTP).
+# nginx(443/도메인) 대신 http://localhost:5002 로 접속. prod.yml과 함께 사용:
+#   docker compose -f infrastructure/docker-compose.prod.yml \
+#     -f infrastructure/docker-compose.prod.local.yml --env-file .env.prod up -d --build postgres minio solver app
+services:
+  app:
+    ports:
+      - '5002:3000'
