@@ -40,9 +40,13 @@
   - 보안·품질(#103~#110): 인프라 산출물 materialize, 보안 리뷰 15건 반영, 낙관적 락 DB CAS·sessionVersion 집행, CI 5종 게이트+의존성 audit, CSP per-request nonce(`unsafe-inline` 제거), MES 적재 원자성, xlsx→exceljs, **Next 14→16**
   - 테스트·의존성(#116~#123): **E2E 11스펙 CI 스모크 통합**(prod 대상 42 pass), eslint 8→9 flat config, zod 3→4, GitHub Actions 메이저
   - 로그인 개편·브랜딩(#124~#126): **사번 8자리/PIN 4자리 로그인**(참조 Check In EAS/FCB), 결재선 엑셀 실사원 27명 선별·부서/직위 6 Role 매핑 적재(실데이터 gitignore), Check In 로고·기어 파비콘, 초기 PIN 강제 변경(`mustChangePassword`), 로그아웃·전 페이지 메인 로고 푸터
+- ✅ **(2026-06-05) 핵심 검증·Phase 2 솔버·의존성** — main 추가 진행(#127~#134, 테스트 372·CI green):
+  - E2E 실측(#127~#128): J-MR-2 성형 드래그 재배분·압출 드래그/확정을 셀 시드 + native drag(`dispatchEvent`+`DataTransfer`로 Playwright dragTo의 dataTransfer 한계 우회)로 skip 해제 — 핵심 스케줄링 양쪽 자동 검증
+  - **Phase 2 OR-Tools 솔버 구현**(#129~#133): `solver/` Python CP-SAT 마이크로서비스(성형·압출, FastAPI+pytest 12) + `solver-client` HTTP 어댑터(성형·압출, 30s timeout·zod·룰 fallback) + 룰/솔버 토글을 생성 경로에 연결. `SOLVER_URL` 주입 시 실솔버, 미설정·장애 시 룰. 룰 스케줄러와 동일 불변식(슬롯 O/X·D-2/D-1·용량·다이노즐 최소화)
+  - 의존성 하드닝(#134): node-cron 3→4(uuid 사슬 제거)·uuid override 11 → prod 취약점 6→3 (잔여 next/next-auth/postcss moderate·vitest critical은 breaking/dev 사유로 보류)
 - 🔜 **남은 작업 = 인프라 적용(코드 외)** — Sprint 11/12에서 실행 불가로 **런북 이연**한 항목을 사내 서버에서 적용:
   - 출시 인프라([docs/operations.md](docs/operations.md)): 사내 서버 배포(compose·nginx·HTTPS)·Sentry self-hosted·Grafana KSF 대시보드·k6 부하·Lighthouse CI·백업/복구/Audit 5년 아카이빙
-  - Phase 2 외부서비스([docs/operations-phase2.md](docs/operations-phase2.md)): OR-Tools 솔버(FastAPI)·Ollama LLM(사내)·AD/LDAP SSO — 코드 측 추상화(`ISolverEngine`·`ILlmProvider`)는 머지 완료, 실 서비스 도입 시 Mock만 교체
+  - Phase 2 외부서비스([docs/operations-phase2.md](docs/operations-phase2.md)): **OR-Tools 솔버는 `solver/`에 CP-SAT 구현 + 어댑터 + 토글까지 완료**(사내 서버 상시화·`SOLVER_URL` 주입만 남음). Ollama LLM(사내)·AD/LDAP SSO는 코드 측 추상화(`ILlmProvider`)만 머지, 실 서비스 도입 시 Mock 교체
   - 적용 시 신규 의존성(`@sentry/nextjs`·`@lhci/cli`·ortools 등)·`.github/workflows`는 별도 PR로 추가(자동 루프 제약과 분리)
 - 각 Sprint 의사결정 로그: [docs/loop/SPRINT{1..12}_DECISION_LOG.md](docs/loop/)
 
@@ -68,7 +72,7 @@
 - Database (prod): **PostgreSQL 16** (사내 단일 인스턴스, AuditLog 5년 보존)
 - 객체 저장소: MinIO (S3 호환) — 첨부·PDF 출력물
 - 배치/스케줄러: 호스트 cron (백업·아카이빙) + Node-cron (애플리케이션 내부)
-- 최적화 엔진(Phase 2): Python + **OR-Tools** 마이크로서비스 (T12.x)
+- 최적화 엔진(Phase 2): Python + **OR-Tools** CP-SAT 마이크로서비스 `solver/`(성형·압출, FastAPI, T12.x) — 룰 스케줄러와 동일 불변식. `SOLVER_URL` 미설정·장애 시 룰 fallback
 
 ### Authentication & Authorization
 - **Auth.js v5** (NextAuth 후속) — Credentials provider + bcrypt(12)
