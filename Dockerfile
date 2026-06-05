@@ -31,6 +31,8 @@ USER nextjs
 EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
+# 컨테이너 내부 healthcheck는 127.0.0.1(IPv4) 사용 — localhost는 alpine에서 ::1(IPv6)로 해석돼
+# 앱(0.0.0.0 IPv4 바인딩)에 연결 실패하여 false unhealthy가 됨.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/api/health || exit 1
 CMD ["node", "server.js"]

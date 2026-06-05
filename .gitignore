@@ -112,3 +112,6 @@ _local/
 *결재선*.xlsx
 /cheek-in-*.svg
 data/standard_imformation/
+
+# ----- 사내 운영 문서 (계정·IP·시크릿 참조 포함 — 자매 프로젝트 동일 정책) -----
+prompt/
