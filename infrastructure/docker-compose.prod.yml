@@ -11,11 +11,14 @@ services:
     env_file: ../.env.prod
     environment:
       - NODE_ENV=production
+      - SOLVER_URL=http://solver:8000 # 미설정 시 룰 fallback (lib/scheduler/solver-client.ts)
     depends_on:
       postgres:
         condition: service_healthy
       minio:
         condition: service_started
+      solver:
+        condition: service_healthy
     expose:
       - '3000' # 내부만 — 외부는 nginx 경유
 
@@ -43,6 +46,21 @@ services:
       - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
     volumes:
       - minio:/data
+
+  solver:
+    build:
+      context: ../solver
+      dockerfile: Dockerfile
+    image: evs-solver:latest
+    restart: unless-stopped
+    expose:
+      - '8000' # 내부만 — app이 SOLVER_URL로 호출
+    healthcheck:
+      test: ['CMD', 'python', '-c', "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').status==200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
 
   nginx:
     image: nginx:1.25-alpine
