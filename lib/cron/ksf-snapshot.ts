@@ -1,4 +1,4 @@
-import cron from 'node-cron';
+import cron, { type ScheduledTask } from 'node-cron';
 import { prisma } from '@/lib/db';
 import { retryWithBackoff, type RetryResult } from '@/lib/notification';
 import { computeUnificationRate } from '@/lib/cron/ksf-metrics';
@@ -28,7 +28,7 @@ export async function runKsfSnapshot(date: Date): Promise<RetryResult<{ date: Da
 }
 
 /** 매일 23:55 cron 등록 (서버 프로세스 기동 시 호출). 빌드/테스트 시 자동 실행되지 않는다. */
-export function registerKsfCron(): cron.ScheduledTask {
+export function registerKsfCron(): ScheduledTask {
   return cron.schedule('55 23 * * *', () => {
     void runKsfSnapshot(new Date());
   });
