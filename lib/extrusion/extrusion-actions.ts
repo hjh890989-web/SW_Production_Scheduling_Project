@@ -34,5 +34,5 @@ export async function generateExtrusionScheduleAction(weekStartISO: string, algo
     after: { saved: result.saved, warnings: result.warnings.length, engine: result.engine },
   });
   revalidatePath('/extrusion');
-  return { ok: true, message: `${result.engine === 'solver' ? '솔버' : '룰'} 생성 완료: ${result.saved}건, 경고 ${result.warnings.length}건`, saved: result.saved, warnings: result.warnings.length };
+  return { ok: true, message: `${result.engine === 'solver' ? '솔버' : '룰'} 자동 생성 완료: ${result.saved}건, 경고 ${result.warnings.length}건`, saved: result.saved, warnings: result.warnings.length };
 }

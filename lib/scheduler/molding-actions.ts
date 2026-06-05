@@ -40,7 +40,7 @@ export async function generateMoldingScheduleAction(weekStartISO: string, algo: 
   revalidatePath('/molding');
   return {
     ok: true,
-    message: `${result.engine === 'solver' ? '솔버' : '룰'} 생성 완료: ${result.saved}건 배치, 경고 ${result.warnings.length}건`,
+    message: `${result.engine === 'solver' ? '솔버' : '룰'} 자동 생성 완료: ${result.saved}건 배치, 경고 ${result.warnings.length}건`,
     saved: result.saved,
     warnings: result.warnings.length,
   };
