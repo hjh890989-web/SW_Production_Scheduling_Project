@@ -6,6 +6,8 @@ import {
   type SchedulerResult,
 } from '@/lib/scheduler/molding-scheduler';
 import { deriveSchedulerItem } from '@/lib/scheduler/slot-eligibility';
+import { createSolverEngine } from '@/lib/scheduler/solver-client';
+import type { Algorithm } from '@/lib/scheduler/algorithm-toggle';
 import type { ScheduleEntryInput } from '@/lib/gantt/adapter';
 import { checkRuleViolations, type RuleViolation } from '@/lib/molding/rule-check';
 
@@ -78,10 +80,44 @@ export async function buildSchedulerInput(weekStartISO: string): Promise<BuiltIn
 }
 
 /** 자동 스케줄 생성 + AUTO 분 영속(기존 MANUAL/CONFIRMED 보존). 반환: 결과. */
-export async function generateAndSave(weekStartISO: string): Promise<SchedulerResult & { saved: number }> {
+export async function generateAndSave(
+  weekStartISO: string,
+  algo: Algorithm = 'rule',
+): Promise<SchedulerResult & { saved: number; engine: 'rule' | 'solver' }> {
   const { input, equipmentIdByCode } = await buildSchedulerInput(weekStartISO);
-  const result = generateMoldingSchedule(input);
   const weekStart = new Date(`${weekStartISO}T00:00:00.000Z`);
+
+  const ruleResult = generateMoldingSchedule(input);
+  let result: SchedulerResult = ruleResult;
+  let engine: 'rule' | 'solver' = 'rule';
+
+  if (algo === 'solver') {
+    // SchedulerInput ≈ SolverInput (weekStart만 추가). 솔버 미설정/장애 시 Mock(빈) → 룰 fallback.
+    const sr = await createSolverEngine().scheduleMolding({ weekStart: weekStartISO, ...input });
+    if (sr.engine === 'solver' && sr.assignments.length > 0) {
+      result = {
+        schedules: sr.assignments.map((a) => ({
+          date: a.date,
+          daynight: a.daynight === 'NIGHT' ? 'NIGHT' : 'DAY',
+          equipmentCode: a.equipmentCode,
+          slot: a.slot,
+          itemId: a.itemId,
+          productCode: input.items[a.itemId]?.productCode ?? '',
+          rotations: a.rotations ?? 0,
+          status: 'AUTO',
+          orderId: a.orderId ?? undefined,
+        })),
+        warnings: sr.warnings.map((reason) => ({ itemId: '', deliveryDate: '', reason })),
+      };
+      engine = 'solver';
+    } else {
+      // 솔버 미가동(Mock)·빈 결과 → 룰 결과 사용 + 솔버 경고를 함께 노출
+      result = {
+        schedules: ruleResult.schedules,
+        warnings: [...sr.warnings.map((reason) => ({ itemId: '', deliveryDate: '', reason })), ...ruleResult.warnings],
+      };
+    }
+  }
 
   await prisma.moldingSchedule.deleteMany({ where: { weekStart, status: 'AUTO' } });
   if (result.schedules.length > 0) {
@@ -101,7 +137,7 @@ export async function generateAndSave(weekStartISO: string): Promise<SchedulerRe
         })),
     });
   }
-  return { ...result, saved: result.schedules.length };
+  return { ...result, saved: result.schedules.length, engine };
 }
 
 /** 주간 MoldingSchedule → 그리드 엔트리(어댑터 입력). */

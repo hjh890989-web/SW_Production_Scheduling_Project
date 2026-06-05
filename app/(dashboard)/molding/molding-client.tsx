@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ScheduleGrid, type MoveTargetCoord } from '@/components/molding/schedule-grid';
 import { ExcelDownloadButton } from '@/components/export/excel-download-button';
 import { AlgorithmToggle } from '@/components/scheduler/algorithm-toggle';
+import { toggleAlgorithm, type Algorithm } from '@/lib/scheduler/algorithm-toggle';
 import type { GridModel } from '@/lib/gantt/types';
 import { generateMoldingScheduleAction } from '@/lib/scheduler/molding-actions';
 import { moveMoldingSchedule } from '@/lib/scheduler/move-actions';
@@ -31,11 +32,12 @@ export function MoldingClient({
   const router = useRouter();
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [pending, startTransition] = useTransition();
+  const [algo, setAlgo] = useState<Algorithm>('rule');
 
   function generate() {
     setMsg(null);
     startTransition(async () => {
-      const res = await generateMoldingScheduleAction(weekStart);
+      const res = await generateMoldingScheduleAction(weekStart, algo);
       setMsg({ text: res.message, ok: res.ok });
       if (res.ok) router.refresh();
     });
@@ -65,7 +67,7 @@ export function MoldingClient({
             {pending ? '생성 중…' : '자동 스케줄 생성'}
           </Button>
           <ExcelDownloadButton weekStart={weekStart} />
-          <AlgorithmToggle />
+          <AlgorithmToggle algo={algo} onToggle={() => setAlgo(toggleAlgorithm(algo))} />
         </div>
       </header>
 
