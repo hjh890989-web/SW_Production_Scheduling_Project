@@ -6,6 +6,8 @@ import {
   type ExtrusionResult,
 } from '@/lib/scheduler/extrusion-scheduler';
 import { generatePipeRequests, type ScheduleForPipe, type PipeRequestItem } from '@/lib/scheduler/pipe-request';
+import { createSolverEngine } from '@/lib/scheduler/solver-client';
+import type { Algorithm } from '@/lib/scheduler/algorithm-toggle';
 import type { ExtEntryInput } from '@/lib/extrusion/grid';
 import type { Shift } from '@/lib/extrusion/die-change';
 import { dieChangeSummary, type DieChangeSummary } from '@/lib/extrusion/die-change-summary';
@@ -103,10 +105,44 @@ export async function buildExtrusionInput(weekStartISO: string): Promise<BuiltEx
   return { input, extruderIdByCode: Object.fromEntries(extruders.map((e) => [e.code, e.id])) };
 }
 
-export async function generateAndSaveExtrusion(weekStartISO: string): Promise<ExtrusionResult & { saved: number }> {
+export async function generateAndSaveExtrusion(
+  weekStartISO: string,
+  algo: Algorithm = 'rule',
+): Promise<ExtrusionResult & { saved: number; engine: 'rule' | 'solver' }> {
   const { input, extruderIdByCode } = await buildExtrusionInput(weekStartISO);
-  const result = generateExtrusionSchedule(input);
   const weekStart = new Date(`${weekStartISO}T00:00:00.000Z`);
+
+  const ruleResult = generateExtrusionSchedule(input);
+  let result: ExtrusionResult = ruleResult;
+  let engine: 'rule' | 'solver' = 'rule';
+
+  if (algo === 'solver') {
+    // ExtrusionInput ≈ ExtrusionSolverInput(동형). 솔버 미설정/장애 시 Mock(빈) → 룰 fallback.
+    const sr = await createSolverEngine().scheduleExtrusion({ ...input });
+    if (sr.engine === 'solver' && sr.assignments.length > 0) {
+      result = {
+        schedules: sr.assignments.map((a) => ({
+          date: a.date,
+          shift: a.shift as Shift,
+          extruderCode: a.extruderCode,
+          itemId: a.itemId,
+          productCode: input.items[a.itemId]?.productCode ?? '',
+          quantity: a.quantity,
+          extrusionGroup: a.extrusionGroup ?? null,
+          headPin: a.headPin ?? null,
+          status: 'AUTO',
+          orderId: a.orderId ?? undefined,
+        })),
+        warnings: sr.warnings.map((reason) => ({ itemId: '', reason })),
+      };
+      engine = 'solver';
+    } else {
+      result = {
+        schedules: ruleResult.schedules,
+        warnings: [...sr.warnings.map((reason) => ({ itemId: '', reason })), ...ruleResult.warnings],
+      };
+    }
+  }
 
   await prisma.extrusionSchedule.deleteMany({ where: { weekStart, status: 'AUTO' } });
   if (result.schedules.length > 0) {
@@ -127,7 +163,7 @@ export async function generateAndSaveExtrusion(weekStartISO: string): Promise<Ex
         })),
     });
   }
-  return { ...result, saved: result.schedules.length };
+  return { ...result, saved: result.schedules.length, engine };
 }
 
 export async function loadWeekExtrusion(weekStartISO: string): Promise<ExtEntryInput[]> {

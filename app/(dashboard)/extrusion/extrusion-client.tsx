@@ -7,6 +7,7 @@ import { ExtrusionGrid, type ExtMoveCoord } from '@/components/extrusion/extrusi
 import { LoadBalanceGraph } from '@/components/extrusion/load-balance-graph';
 import { ExcelDownloadButton } from '@/components/export/excel-download-button';
 import { AlgorithmToggle } from '@/components/scheduler/algorithm-toggle';
+import { toggleAlgorithm, type Algorithm } from '@/lib/scheduler/algorithm-toggle';
 import type { ExtGridModel } from '@/lib/extrusion/grid';
 import type { DayLoad } from '@/lib/extrusion/load-balance';
 import { generateExtrusionScheduleAction } from '@/lib/extrusion/extrusion-actions';
@@ -32,11 +33,12 @@ export function ExtrusionClient({
   const router = useRouter();
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
   const [pending, startTransition] = useTransition();
+  const [algo, setAlgo] = useState<Algorithm>('rule');
 
   function generate() {
     setMsg(null);
     startTransition(async () => {
-      const res = await generateExtrusionScheduleAction(weekStart);
+      const res = await generateExtrusionScheduleAction(weekStart, algo);
       setMsg({ text: res.message, ok: res.ok });
       if (res.ok) router.refresh();
     });
@@ -77,7 +79,7 @@ export function ExtrusionClient({
             확정
           </Button>
           <ExcelDownloadButton weekStart={weekStart} />
-          <AlgorithmToggle />
+          <AlgorithmToggle algo={algo} onToggle={() => setAlgo(toggleAlgorithm(algo))} />
         </div>
       </header>
 
