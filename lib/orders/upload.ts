@@ -27,6 +27,15 @@ export interface UploadResult {
   errors?: string[];
 }
 
+/** 다중 파일(3종 동시) 업로드 결과 — 파일별 UploadResult 묶음. */
+export interface MultiUploadResult {
+  ok: boolean;
+  message: string;
+  results: Array<UploadResult & { fileName: string }>;
+}
+
+type SessionLike = { user?: { id?: string | null; role?: string | null } } | null;
+
 function parseByType(wb: Workbook, sourceType: SourceType): ParseResult {
   const names = workbookSheetNames(wb);
   if (sourceType === 'weekly_plan') return parseWeeklyPlan(workbookMatrix(wb, names[0]));
@@ -41,19 +50,10 @@ function parseByType(wb: Workbook, sourceType: SourceType): ParseResult {
 }
 
 /**
- * 수주 엑셀 업로드 → 파싱 → 실리콘 필터 → 우선순위 → Order 적재 (T3.6 — AC SP-1-1·2).
- * 미매칭 품번은 적재하지 않고 알림 대상으로 반환.
+ * 단일 파일 코어: 파싱 → 실리콘 필터 → 우선순위 → Order 적재 (T3.6 — AC SP-1-1·2).
+ * revalidate는 호출부에서 1회 수행한다(다중 업로드 시 중복 방지).
  */
-export async function uploadOrders(formData: FormData): Promise<UploadResult> {
-  const session = await auth();
-  try {
-    requirePermission(session?.user, 'order:upload');
-  } catch {
-    return { ok: false, message: '업로드 권한(order:upload)이 없습니다.' };
-  }
-
-  const file = formData.get('file');
-  if (!(file instanceof File)) return { ok: false, message: '파일이 없습니다.' };
+async function processOneFile(file: File, session: SessionLike): Promise<UploadResult> {
   if (file.size > MAX_UPLOAD_BYTES) {
     return { ok: false, message: '파일이 50MB를 초과합니다.' };
   }
@@ -67,7 +67,7 @@ export async function uploadOrders(formData: FormData): Promise<UploadResult> {
   try {
     wb = await loadWorkbook(await file.arrayBuffer());
   } catch {
-    return { ok: false, message: '엑셀 파일을 읽을 수 없습니다(손상되었을 수 있습니다).' };
+    return { ok: false, message: '엑셀 파일을 읽을 수 없습니다(손상되었을 수 있습니다).', sourceType };
   }
 
   const parsed = parseByType(wb, sourceType);
@@ -112,7 +112,6 @@ export async function uploadOrders(formData: FormData): Promise<UploadResult> {
     after: { sourceType, loaded, superseded, unmatched: codes.length, rejected: filtered.rejected.length },
   });
 
-  revalidatePath('/orders');
   return {
     ok: true,
     message: `적재 완료: ACTIVE ${loaded}건 (superseded ${superseded}, 미매칭 ${codes.length}, 비실리콘 ${filtered.rejected.length})`,
@@ -122,5 +121,58 @@ export async function uploadOrders(formData: FormData): Promise<UploadResult> {
     unmatched: codes,
     rejected: filtered.rejected.length,
     errors: parsed.errors,
+  };
+}
+
+/**
+ * 수주 엑셀 단일 업로드 (T3.6). 다중 업로드는 uploadOrdersMulti 사용.
+ */
+export async function uploadOrders(formData: FormData): Promise<UploadResult> {
+  const session = await auth();
+  try {
+    requirePermission(session?.user, 'order:upload');
+  } catch {
+    return { ok: false, message: '업로드 권한(order:upload)이 없습니다.' };
+  }
+
+  const file = formData.get('file');
+  if (!(file instanceof File)) return { ok: false, message: '파일이 없습니다.' };
+
+  const res = await processOneFile(file, session);
+  if (res.ok) revalidatePath('/orders');
+  return res;
+}
+
+/**
+ * 수주 엑셀 다중 업로드 (3종 동시 드래그). 파일별로 종류 자동 감지·독립 적재하고
+ * 결과를 묶어 반환한다. 각 파일은 단일 업로드와 동일한 의미(개별 batchId·우선순위).
+ */
+export async function uploadOrdersMulti(formData: FormData): Promise<MultiUploadResult> {
+  const session = await auth();
+  try {
+    requirePermission(session?.user, 'order:upload');
+  } catch {
+    return { ok: false, message: '업로드 권한(order:upload)이 없습니다.', results: [] };
+  }
+
+  const files = formData.getAll('files').filter((f): f is File => f instanceof File);
+  if (files.length === 0) return { ok: false, message: '파일이 없습니다.', results: [] };
+
+  const results: MultiUploadResult['results'] = [];
+  for (const file of files) {
+    const res = await processOneFile(file, session);
+    results.push({ ...res, fileName: file.name });
+  }
+
+  const okCount = results.filter((r) => r.ok).length;
+  if (okCount > 0) revalidatePath('/orders');
+
+  return {
+    ok: okCount === files.length,
+    message:
+      okCount === files.length
+        ? `적재 완료: ${okCount}개 파일 모두 처리`
+        : `${files.length}개 중 ${okCount}개 적재 완료 (${files.length - okCount}개 실패)`,
+    results,
   };
 }

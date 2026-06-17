@@ -10,7 +10,7 @@ export default function OrdersUploadPage() {
       <header className="mb-4">
         <h1 className="text-2xl font-bold">수주 엑셀 업로드 (W-2)</h1>
         <p className="mt-1 text-base text-muted-foreground">
-          주간 계획·KD 발주·월예상 통합 파일을 올리면 자동으로 종류 감지·실리콘 필터·우선순위 적용 후 적재합니다.
+          주간 계획·KD 발주·월예상 통합 파일을 한 번에 드래그하면 파일별로 종류 감지·실리콘 필터·우선순위 적용 후 적재합니다.
         </p>
       </header>
       <UploadForm />

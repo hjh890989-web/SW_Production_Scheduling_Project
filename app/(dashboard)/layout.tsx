@@ -1,14 +1,18 @@
 import Link from 'next/link';
 import { auth, signOut } from '@/auth';
 import { getNotifications, getUnreadCount } from '@/lib/notification-actions';
+import { hasPermission, type Permission } from '@/lib/permissions';
 import { NotificationBell } from '@/components/notification-bell';
 
 export const dynamic = 'force-dynamic';
 
-const NAV = [
+// perm이 있으면 해당 권한 보유자에게만 노출, 없으면 전원 노출.
+const NAV: { href: string; label: string; perm?: Permission }[] = [
   { href: '/', label: '대시보드' },
   { href: '/orders/upload', label: '수주 업로드' },
   { href: '/orders/change', label: '변동 입력' },
+  { href: '/molding', label: '성형 스케줄', perm: 'molding:read' },
+  { href: '/extrusion', label: '압출 스케줄', perm: 'extrusion:read' },
   { href: '/orders/audit', label: '감사 이력' },
   { href: '/work-instruction', label: '작업지시서' },
   { href: '/reports/quarterly', label: '분기 리포트' },
@@ -31,7 +35,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             <img src="/check-in-evs-logo.svg" alt="EVS · Check In" className="h-8 w-auto" />
           </Link>
           <nav className="flex gap-4 text-base">
-            {NAV.map((n) => (
+            {NAV.filter((n) => !n.perm || hasPermission(session?.user, n.perm)).map((n) => (
               <Link key={n.href} href={n.href} className="text-muted-foreground hover:text-foreground">
                 {n.label}
               </Link>

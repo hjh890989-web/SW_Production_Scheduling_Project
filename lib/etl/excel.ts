@@ -32,18 +32,35 @@ function cellToValue(v: unknown): CellValue {
   return null; // error 등
 }
 
-/** 워크시트 → 2차원 matrix (xlsx `header:1, blankrows:false, defval:null` 동등). */
+/**
+ * 워크시트 → 2차원 matrix (xlsx `header:1, blankrows:false, defval:null` 동등).
+ *
+ * ws.rowCount/columnCount(또는 getCell 순회)는 값 없이 스타일만 있는 "유령 영역"까지
+ * 포함할 수 있어, 그 범위를 dense하게 순회하면 수백만 셀을 할당해 힙 OOM이 난다.
+ * 따라서 실제 값이 있는 셀만 sparse 순회하고, 데이터가 존재하는 최대 열까지만 정규화한다.
+ */
 function worksheetToMatrix(ws: ExcelJS.Worksheet): CellValue[][] {
-  const rowCount = ws.rowCount;
-  const colCount = ws.columnCount;
-  const matrix: CellValue[][] = [];
-  for (let r = 1; r <= rowCount; r += 1) {
-    const row = ws.getRow(r);
+  const rows: CellValue[][] = [];
+  let maxCol = 0;
+  ws.eachRow({ includeEmpty: false }, (row) => {
     const arr: CellValue[] = [];
-    for (let c = 1; c <= colCount; c += 1) arr[c - 1] = cellToValue(row.getCell(c).value);
-    matrix.push(arr);
-  }
-  return matrix.filter((r) => r.some((v) => v !== null && v !== undefined && v !== '')); // blankrows:false
+    let hasValue = false;
+    row.eachCell({ includeEmpty: false }, (cell, colNumber) => {
+      const v = cellToValue(cell.value);
+      arr[colNumber - 1] = v;
+      if (v !== null && v !== undefined && v !== '') {
+        hasValue = true;
+        if (colNumber > maxCol) maxCol = colNumber; // 값 있는 셀만 폭에 반영(유령 열 배제)
+      }
+    });
+    if (hasValue) rows.push(arr); // blankrows:false
+  });
+  // dense 직사각형 보장(파서가 고정 열 인덱스로 접근) — 폭은 실제 데이터 최대 열까지만.
+  return rows.map((arr) => {
+    const dense: CellValue[] = new Array(maxCol);
+    for (let c = 0; c < maxCol; c += 1) dense[c] = arr[c] ?? null;
+    return dense;
+  });
 }
 
 /** 버퍼/ArrayBuffer → 워크북(async). 업로드 서버액션에서 사용. */
