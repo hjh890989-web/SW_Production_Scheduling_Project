@@ -23,6 +23,7 @@ export interface ScheduleEntryInput {
   rotations: number;
   status: MoldingStatus;
   ruleViolation?: boolean;
+  prebuild?: boolean;
   scheduleId?: string;
   updatedAt?: string;
 }
@@ -65,6 +66,7 @@ export function buildCells(entries: ScheduleEntryInput[]): GridCell[] {
     rotations: e.rotations,
     status: e.status,
     ruleViolation: e.ruleViolation ?? false,
+    prebuild: e.prebuild ?? false,
     scheduleId: e.scheduleId,
     updatedAt: e.updatedAt,
   }));

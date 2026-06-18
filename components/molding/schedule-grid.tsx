@@ -38,6 +38,10 @@ export function ScheduleGrid({
             {l.label}
           </li>
         ))}
+        <li className="flex items-center gap-1">
+          <span className="inline-block h-4 w-6 rounded border-2 border-dashed border-amber-500 bg-amber-50" />
+          선행생산(미래 당김)
+        </li>
       </ul>
 
       <div className="overflow-auto rounded-md border">
@@ -93,11 +97,12 @@ export function ScheduleGrid({
                                 }
                               : undefined
                           }
-                          title={explainCell(cell)}
-                          className={`flex min-h-11 min-w-11 flex-col justify-center rounded px-1 py-1 text-center text-base ${canDrag ? 'cursor-move' : ''} ${cellClass(cell.status, cell.ruleViolation)}`}
+                          title={explainCell(cell) + (cell.prebuild ? ' · 선행생산(미래 납기 당김)' : '')}
+                          className={`flex min-h-11 min-w-11 flex-col justify-center rounded px-1 py-1 text-center text-base ${canDrag ? 'cursor-move' : ''} ${cellClass(cell.status, cell.ruleViolation)} ${cell.prebuild ? 'border-2 border-dashed border-amber-500' : ''}`}
                         >
                           <div className="font-mono text-sm">
                             {cell.productCode} {statusBadge(cell.status)}
+                            {cell.prebuild && <span className="ml-1 rounded bg-amber-200 px-1 text-xs text-amber-900">선행</span>}
                           </div>
                           <div>{cell.rotations}회</div>
                         </div>

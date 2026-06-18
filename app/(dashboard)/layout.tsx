@@ -9,6 +9,7 @@ export const dynamic = 'force-dynamic';
 // perm이 있으면 해당 권한 보유자에게만 노출, 없으면 전원 노출.
 const NAV: { href: string; label: string; perm?: Permission }[] = [
   { href: '/', label: '대시보드' },
+  { href: '/orders', label: '수주 현황', perm: 'order:read' },
   { href: '/orders/upload', label: '수주 업로드' },
   { href: '/orders/change', label: '변동 입력' },
   { href: '/molding', label: '성형 스케줄', perm: 'molding:read' },

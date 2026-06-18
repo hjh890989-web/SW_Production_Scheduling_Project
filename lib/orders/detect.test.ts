@@ -8,6 +8,13 @@ describe('detectSourceType (T3.6)', () => {
     expect(detectSourceType('통합_수주정보_02월_1_2주차.xlsx')).toBe('monthly_forecast');
   });
 
+  it('월예상 — 예상/매출 계획 명칭도 monthly_forecast', () => {
+    expect(detectSourceType('06월 실리콘 예상 매출 계획.xlsx')).toBe('monthly_forecast');
+    expect(detectSourceType('월예상_06월.xlsx')).toBe('monthly_forecast');
+    // 주간/KD 키워드가 함께 있으면 그쪽이 우선(선점 순서 보장)
+    expect(detectSourceType('실리콘 06월 4주차 주간 계획.xlsx')).toBe('weekly_plan');
+  });
+
   it('미인식 파일명 → null', () => {
     expect(detectSourceType('무관한파일.xlsx')).toBeNull();
   });

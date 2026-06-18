@@ -1,11 +1,16 @@
 import type { Metadata } from 'next';
+import { auth } from '@/auth';
 import { prisma } from '@/lib/db';
+import { hasPermission } from '@/lib/permissions';
 import { ItemsTable, type ItemRow } from './items-table';
+import { AddItemForm } from './add-item-form';
 
 export const metadata: Metadata = { title: '품번 마스터 · EVS' };
 export const dynamic = 'force-dynamic';
 
 export default async function ItemsMasterPage() {
+  const session = await auth();
+  const canWrite = hasPermission(session?.user, 'master:write');
   const items = await prisma.item.findMany({
     orderBy: { productCode: 'asc' },
     include: { aliases: { select: { id: true, alias: true } } },
@@ -22,6 +27,9 @@ export default async function ItemsMasterPage() {
     cutLength: i.cutLength,
     extruderFord: i.extruderFord,
     extruderNew: i.extruderNew,
+    lpMoldsPerAngle: i.lpMoldsPerAngle,
+    icMoldsPerAngle: i.icMoldsPerAngle,
+    lpPosTop: i.lpPosTop,
     updatedAt: i.updatedAt.toISOString(),
     aliases: i.aliases,
   }));
@@ -34,6 +42,11 @@ export default async function ItemsMasterPage() {
           {rows.length}품번(실리콘·EPDM·NBR). 자재 필터로 좁히고, 셀을 클릭해 인라인 편집, 별칭은 관리 버튼으로 추가·삭제합니다.
         </p>
       </header>
+      {canWrite && (
+        <div className="mb-4">
+          <AddItemForm />
+        </div>
+      )}
       <ItemsTable rows={rows} />
     </main>
   );

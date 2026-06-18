@@ -59,6 +59,10 @@ export interface SchedulerInput {
   rotationsPerDay: number;
   rotationsPerNight: number;
   d2Days?: number; // 기본 2 (D-2)
+  // 캐파 채움(선행생산): 빈 셀에 당겨 채울 미래 수요(KD·월예상, 1개월 이내). 마감 제약 없음.
+  fillOrders?: SchedulerOrder[];
+  // 채움 대상 영업일(미지정 시 workdays 전체). 표시 주차로 한정하기 위함.
+  fillWorkdays?: string[];
 }
 
 export interface SchedulerResult {
@@ -145,6 +149,46 @@ export function generateMoldingSchedule(input: SchedulerInput): SchedulerResult 
         itemId: item.itemId, orderId: order.orderId, deliveryDate: order.deliveryDate,
         reason: '가용 슬롯 부족 — 부분 배치', shortfallRotations: rotationsNeeded,
       });
+    }
+  }
+
+  // ── 캐파 채움(선행생산) 패스 ──
+  // 빈 셀에 미래 KD·월예상 수요를 전진 채움(가장 이른 영업일부터). 미래 납기라 마감 제약 불필요.
+  // 부족분은 경고하지 않는다(선택적 채움). 적격(슬롯 O·타입 일치) 셀만 채워 슬롯 X는 비워둔다.
+  const fillOrders = input.fillOrders ?? [];
+  const fillDays = input.fillWorkdays ?? workdays;
+  const sortedFill = [...fillOrders].sort((a, b) =>
+    a.deliveryDate < b.deliveryDate ? -1 : a.deliveryDate > b.deliveryDate ? 1 : 0,
+  );
+  for (const order of sortedFill) {
+    const item = items[order.itemId];
+    if (!item || item.moldsPerAngle <= 0 || item.allowedSlots.length === 0) continue;
+    let rotationsNeeded = Math.ceil(order.quantity / item.moldsPerAngle);
+
+    for (let d = 0; d < fillDays.length && rotationsNeeded > 0; d += 1) {
+      const date = fillDays[d];
+      for (const dn of ['DAY', 'NIGHT'] as DayNight[]) {
+        const cap = capOf(dn);
+        for (const eq of equipment) {
+          if (!eq.isActive || eq.type !== item.equipmentType) continue;
+          for (const slot of eq.slots) {
+            if (!item.allowedSlots.includes(slot)) continue;
+            const key = `${date}|${dn}|${eq.code}|${slot}`;
+            const free = cellFree.has(key) ? (cellFree.get(key) as number) : cap;
+            if (free <= 0) continue;
+            const take = Math.min(free, rotationsNeeded);
+            cellFree.set(key, free - take);
+            schedules.push({
+              date, daynight: dn, equipmentCode: eq.code, slot,
+              itemId: item.itemId, productCode: item.productCode, rotations: take, status: 'AUTO', orderId: order.orderId,
+            });
+            rotationsNeeded -= take;
+            if (rotationsNeeded <= 0) break;
+          }
+          if (rotationsNeeded <= 0) break;
+        }
+        if (rotationsNeeded <= 0) break;
+      }
     }
   }
 

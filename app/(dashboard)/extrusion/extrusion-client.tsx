@@ -7,6 +7,7 @@ import { ExtrusionGrid, type ExtMoveCoord } from '@/components/extrusion/extrusi
 import { LoadBalanceGraph } from '@/components/extrusion/load-balance-graph';
 import { ExcelDownloadButton } from '@/components/export/excel-download-button';
 import { AlgorithmToggle } from '@/components/scheduler/algorithm-toggle';
+import { WeekNav } from '@/components/scheduler/week-nav';
 import { toggleAlgorithm, type Algorithm } from '@/lib/scheduler/algorithm-toggle';
 import type { ExtGridModel } from '@/lib/extrusion/grid';
 import type { DayLoad } from '@/lib/extrusion/load-balance';
@@ -72,6 +73,7 @@ export function ExtrusionClient({
           </p>
         </div>
         <div className="flex gap-2">
+          <WeekNav weekStart={weekStart} basePath="/extrusion" />
           <Button onClick={generate} disabled={pending} className="h-11 text-base">
             {pending ? '생성 중…' : '자동 스케줄 생성'}
           </Button>

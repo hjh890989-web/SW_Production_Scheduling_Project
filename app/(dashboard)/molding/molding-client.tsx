@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ScheduleGrid, type MoveTargetCoord } from '@/components/molding/schedule-grid';
 import { ExcelDownloadButton } from '@/components/export/excel-download-button';
 import { AlgorithmToggle } from '@/components/scheduler/algorithm-toggle';
+import { WeekNav } from '@/components/scheduler/week-nav';
 import { toggleAlgorithm, type Algorithm } from '@/lib/scheduler/algorithm-toggle';
 import type { GridModel } from '@/lib/gantt/types';
 import { generateMoldingScheduleAction } from '@/lib/scheduler/molding-actions';
@@ -31,14 +32,17 @@ export function MoldingClient({
 }) {
   const router = useRouter();
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
+  const [genWarnings, setGenWarnings] = useState<{ productCode: string; deliveryDate: string; reason: string }[]>([]);
   const [pending, startTransition] = useTransition();
   const [algo, setAlgo] = useState<Algorithm>('rule');
 
   function generate() {
     setMsg(null);
+    setGenWarnings([]);
     startTransition(async () => {
       const res = await generateMoldingScheduleAction(weekStart, algo);
       setMsg({ text: res.message, ok: res.ok });
+      setGenWarnings(res.warningDetails ?? []);
       if (res.ok) router.refresh();
     });
   }
@@ -63,6 +67,7 @@ export function MoldingClient({
           </p>
         </div>
         <div className="flex items-start gap-2">
+          <WeekNav weekStart={weekStart} basePath="/molding" />
           <Button onClick={generate} disabled={pending} className="h-11 text-base">
             {pending ? '생성 중…' : '자동 스케줄 생성'}
           </Button>
@@ -86,6 +91,40 @@ export function MoldingClient({
         <p className={`mb-3 rounded-md p-3 text-sm ${msg.ok ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`} role="alert">
           {msg.text}
         </p>
+      )}
+
+      {genWarnings.length > 0 && (
+        <details className="mb-3 rounded-md border border-amber-300 bg-amber-50" open>
+          <summary className="cursor-pointer p-3 text-sm font-semibold text-amber-800">
+            ⚠️ 미배치/부분배치 경고 {genWarnings.length}건 — 품번별 사유 (클릭해 접기)
+          </summary>
+          <div className="border-t border-amber-200 p-3">
+            <ul className="mb-2 flex flex-wrap gap-2 text-xs">
+              {Object.entries(
+                genWarnings.reduce<Record<string, number>>((acc, w) => {
+                  acc[w.reason] = (acc[w.reason] ?? 0) + 1;
+                  return acc;
+                }, {}),
+              ).map(([reason, n]) => (
+                <li key={reason} className="rounded bg-amber-100 px-2 py-1 text-amber-800">
+                  {reason}: {n}건
+                </li>
+              ))}
+            </ul>
+            <ul className="max-h-60 overflow-y-auto text-sm">
+              {genWarnings.map((w, i) => (
+                <li key={`${w.productCode}-${i}`} className="flex flex-wrap gap-x-3 border-t border-amber-100 py-1 first:border-t-0">
+                  <span className="font-mono">{w.productCode}</span>
+                  {w.deliveryDate && <span className="text-muted-foreground">납기 {w.deliveryDate}</span>}
+                  <span className="text-amber-800">{w.reason}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-2 text-xs text-muted-foreground">
+              대부분 품번 마스터의 성형 제약(앵글당 금형수·LP상단) 미설정이 원인입니다. 품번 마스터에서 값을 채운 뒤 다시 생성하세요.
+            </p>
+          </div>
+        </details>
       )}
 
       {violations.length > 0 && (

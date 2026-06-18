@@ -32,6 +32,14 @@ function slotsOf(capacity: unknown): string[] {
 export interface BuiltInput {
   input: SchedulerInput;
   equipmentIdByCode: Record<string, string>;
+  codeById: Record<string, string>; // 전체 품번(스케줄 제외분 포함) itemId→productCode — 경고 표시용
+}
+
+/** 경고(품번코드·납기·사유)를 사람이 읽을 형태로 변환. */
+export interface WarningDetail {
+  productCode: string;
+  deliveryDate: string;
+  reason: string;
 }
 
 /** DB → SchedulerInput (T5.4). 주간 시작부터 28일 horizon의 영업일·ACTIVE 수주 사용. */
@@ -56,10 +64,26 @@ export async function buildSchedulerInput(weekStartISO: string): Promise<BuiltIn
     where: { status: 'ACTIVE', deliveryDate: { gte: weekStart, lte: horizonEnd } },
   });
 
+  // 캐파 채움용 미래 수요: horizon 이후 ~1개월 이내 KD·월예상 ACTIVE 수주(선행생산 후보).
+  const fillEnd = new Date(horizonEnd);
+  fillEnd.setUTCDate(fillEnd.getUTCDate() + 28);
+  const fillOrdersRaw = await prisma.order.findMany({
+    where: {
+      status: 'ACTIVE',
+      sourceType: { in: ['kd', 'monthly_forecast'] },
+      deliveryDate: { gt: horizonEnd, lte: fillEnd },
+    },
+  });
+
   const cal = await prisma.calendarDay.findMany({
     where: { isWorkday: true, date: { gte: weekStart, lte: horizonEnd } },
     orderBy: { date: 'asc' },
   });
+
+  // 채움은 표시 주차(weekStart~+6)로 한정 — 보이는 빈 슬롯부터 메운다.
+  const weekEndForFill = new Date(weekStart);
+  weekEndForFill.setUTCDate(weekEndForFill.getUTCDate() + 6);
+  const fillWorkdays = cal.filter((c) => c.date <= weekEndForFill).map((c) => iso(c.date));
 
   const paramRows = await prisma.operationParam.findMany({ where: { key: { in: ['lp_rotation_day', 'lp_rotation_night'] } } });
   const paramVal = (key: string, dflt: number) => {
@@ -74,17 +98,23 @@ export async function buildSchedulerInput(weekStartISO: string): Promise<BuiltIn
     workdays: cal.map((c) => iso(c.date)),
     rotationsPerDay: paramVal('lp_rotation_day', 8),
     rotationsPerNight: paramVal('lp_rotation_night', 10),
+    fillOrders: fillOrdersRaw.map((o) => ({ itemId: o.itemId, deliveryDate: iso(o.deliveryDate), quantity: o.quantity, orderId: o.id })),
+    fillWorkdays,
   };
 
-  return { input, equipmentIdByCode: Object.fromEntries(equipment.map((e) => [e.code, e.id])) };
+  return {
+    input,
+    equipmentIdByCode: Object.fromEntries(equipment.map((e) => [e.code, e.id])),
+    codeById: Object.fromEntries(itemsRaw.map((it) => [it.id, it.productCode])),
+  };
 }
 
 /** 자동 스케줄 생성 + AUTO 분 영속(기존 MANUAL/CONFIRMED 보존). 반환: 결과. */
 export async function generateAndSave(
   weekStartISO: string,
   algo: Algorithm = 'rule',
-): Promise<SchedulerResult & { saved: number; engine: 'rule' | 'solver' }> {
-  const { input, equipmentIdByCode } = await buildSchedulerInput(weekStartISO);
+): Promise<SchedulerResult & { saved: number; engine: 'rule' | 'solver'; warningDetails: WarningDetail[] }> {
+  const { input, equipmentIdByCode, codeById } = await buildSchedulerInput(weekStartISO);
   const weekStart = new Date(`${weekStartISO}T00:00:00.000Z`);
 
   const ruleResult = generateMoldingSchedule(input);
@@ -137,16 +167,32 @@ export async function generateAndSave(
         })),
     });
   }
-  return { ...result, saved: result.schedules.length, engine };
+  const warningDetails: WarningDetail[] = result.warnings.map((w) => ({
+    productCode: w.itemId ? (codeById[w.itemId] ?? w.itemId) : '(솔버)',
+    deliveryDate: w.deliveryDate,
+    reason: w.reason + (w.shortfallRotations ? ` (부족 ${w.shortfallRotations}회전)` : ''),
+  }));
+
+  return { ...result, saved: result.schedules.length, engine, warningDetails };
 }
 
 /** 주간 MoldingSchedule → 그리드 엔트리(어댑터 입력). */
 export async function loadWeekEntries(weekStartISO: string): Promise<ScheduleEntryInput[]> {
   const weekStart = new Date(`${weekStartISO}T00:00:00.000Z`);
+  const weekEnd = new Date(weekStart);
+  weekEnd.setUTCDate(weekEnd.getUTCDate() + 6);
   const rows = await prisma.moldingSchedule.findMany({
     where: { weekStart },
     include: { equipment: { select: { code: true } }, item: { select: { productCode: true } } },
   });
+
+  // 선행생산 판정: 이번 주 생산이지만 납기가 표시 주차 이후인 셀(orderId 납기 조회).
+  const orderIds = [...new Set(rows.map((r) => r.orderId).filter((x): x is string => !!x))];
+  const orderRows = orderIds.length
+    ? await prisma.order.findMany({ where: { id: { in: orderIds } }, select: { id: true, deliveryDate: true } })
+    : [];
+  const deliveryById = new Map(orderRows.map((o) => [o.id, o.deliveryDate]));
+
   return rows.map((r) => ({
     date: iso(r.date),
     daynight: r.daynight === 'NIGHT' ? 'NIGHT' : 'DAY',
@@ -157,6 +203,7 @@ export async function loadWeekEntries(weekStartISO: string): Promise<ScheduleEnt
     rotations: r.rotations,
     status: r.status === 'MANUAL' ? 'MANUAL' : r.status === 'CONFIRMED' ? 'CONFIRMED' : 'AUTO',
     ruleViolation: r.ruleViolation,
+    prebuild: !!(r.orderId && deliveryById.get(r.orderId) && (deliveryById.get(r.orderId) as Date) > weekEnd),
     scheduleId: r.id,
     updatedAt: r.updatedAt.toISOString(),
   }));

@@ -28,6 +28,7 @@ export interface GridCell {
   rotations: number;
   status: MoldingStatus;
   ruleViolation: boolean;
+  prebuild?: boolean; // 선행생산(미래 납기 당겨 채움)
   scheduleId?: string;
   updatedAt?: string;
 }

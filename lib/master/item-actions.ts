@@ -6,6 +6,7 @@ import { prisma } from '@/lib/db';
 import { requirePermission } from '@/lib/permissions';
 import { logAudit } from '@/lib/audit';
 import { addAlias, normalizeProductCode } from '@/lib/etl/normalizer';
+import { normalizeMaterial } from '@/lib/material/material';
 
 export interface ActionResult {
   ok: boolean;
@@ -13,14 +14,68 @@ export interface ActionResult {
   conflict?: boolean;
 }
 
+export interface CreateItemInput {
+  productCode: string;
+  material: string;
+  customerCode?: string;
+  hwasungCode?: string;
+}
+
+/**
+ * 신규 품번 등록 (W-6.1). 미매칭 수주 품번을 마스터에 추가하는 경로.
+ * 권한 master:write + productCode 중복 검사 + AuditLog.
+ * 압출·성형 제약은 등록 후 인라인 편집으로 채운다.
+ */
+export async function createItem(input: CreateItemInput): Promise<ActionResult> {
+  const session = await auth();
+  try {
+    requirePermission(session?.user, 'master:write');
+  } catch {
+    return { ok: false, message: '등록 권한(master:write)이 없습니다.' };
+  }
+
+  const productCode = input.productCode.trim();
+  if (productCode.length < 3) return { ok: false, message: '품번을 3자 이상 입력하세요.' };
+
+  const existing = await prisma.item.findUnique({ where: { productCode } });
+  if (existing) return { ok: false, conflict: true, message: `이미 등록된 품번입니다: ${productCode}` };
+
+  const material = normalizeMaterial(input.material);
+  await prisma.item.create({
+    data: {
+      productCode,
+      material,
+      customerCode: input.customerCode?.trim() || null,
+      hwasungCode: input.hwasungCode?.trim() || null,
+    },
+  });
+
+  await logAudit({
+    userId: session?.user?.id ?? null,
+    userRole: session?.user?.role ?? null,
+    action: 'ITEM_CREATED',
+    table: 'Item',
+    key: productCode,
+    after: { productCode, material },
+  });
+
+  revalidatePath('/master/items');
+  return { ok: true, message: `품번이 등록되었습니다: ${productCode} (${material})` };
+}
+
 // 인라인 편집 허용 필드 화이트리스트 (타입 변환 기준)
-const EDITABLE_FIELDS: Record<string, 'string' | 'number'> = {
+const EDITABLE_FIELDS: Record<string, 'string' | 'number' | 'boolean'> = {
   customerCode: 'string',
   hwasungCode: 'string',
   headPin: 'string',
   cutLength: 'number',
   extrusionSpeed: 'number',
   extrusionGroup: 'number',
+  extruderFord: 'boolean',
+  extruderNew: 'boolean',
+  lpMoldsPerAngle: 'number',
+  icMoldsPerAngle: 'number',
+  lpPosTop: 'boolean',
 };
 
 /**
@@ -51,13 +106,23 @@ export async function updateItemField(
     return { ok: false, conflict: true, message: '다른 사용자가 먼저 수정했습니다. 새로고침 후 다시 시도하세요.' };
   }
 
-  let value: string | number | null;
+  let value: string | number | boolean | null;
   if (kind === 'number') {
     const trimmed = rawValue.trim();
     value = trimmed === '' ? null : Number(trimmed);
     if (value !== null && Number.isNaN(value)) {
       return { ok: false, message: '숫자를 입력하세요.' };
     }
+    // E그룹은 압출 다이 분류(1~8). 범위 밖 값은 스케줄링을 망가뜨리므로 거부.
+    if (field === 'extrusionGroup' && value !== null && (!Number.isInteger(value) || value < 1 || value > 8)) {
+      return { ok: false, message: 'E그룹은 1~8 사이의 정수여야 합니다.' };
+    }
+    // 앵글당 금형수는 회전수 계산 분모 — 음수·소수면 스케줄 배치가 깨진다.
+    if ((field === 'lpMoldsPerAngle' || field === 'icMoldsPerAngle') && value !== null && (!Number.isInteger(value) || value < 0)) {
+      return { ok: false, message: '앵글당 금형수는 0 이상의 정수여야 합니다.' };
+    }
+  } else if (kind === 'boolean') {
+    value = rawValue === 'true';
   } else {
     value = rawValue.trim() === '' ? null : rawValue.trim();
   }

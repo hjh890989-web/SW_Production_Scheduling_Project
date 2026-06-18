@@ -12,6 +12,7 @@ export interface GenerateResult {
   message: string;
   saved?: number;
   warnings?: number;
+  warningDetails?: { productCode: string; deliveryDate: string; reason: string }[];
 }
 
 /** 성형 자동 스케줄 생성 (T5.4 + T12.3 솔버 토글). molding:write + AuditLog. */
@@ -43,5 +44,6 @@ export async function generateMoldingScheduleAction(weekStartISO: string, algo: 
     message: `${result.engine === 'solver' ? '솔버' : '룰'} 자동 생성 완료: ${result.saved}건 배치, 경고 ${result.warnings.length}건`,
     saved: result.saved,
     warnings: result.warnings.length,
+    warningDetails: result.warningDetails,
   };
 }

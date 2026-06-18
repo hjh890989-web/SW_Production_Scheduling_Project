@@ -31,6 +31,9 @@ export interface ItemRow {
   cutLength: number | null;
   extruderFord: boolean;
   extruderNew: boolean;
+  lpMoldsPerAngle: number | null;
+  icMoldsPerAngle: number | null;
+  lpPosTop: boolean;
   updatedAt: string;
   aliases: { id: string; alias: string }[];
 }
@@ -68,6 +71,64 @@ function EditableCell({
         disabled={pending}
         className="w-full rounded border border-input bg-background px-2 py-1 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label={field}
+      />
+      {msg && <span className="text-xs text-red-600">{msg}</span>}
+    </div>
+  );
+}
+
+function ExtruderCell({ row }: { row: ItemRow }) {
+  const [msg, setMsg] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  function toggle(field: 'extruderFord' | 'extruderNew', next: boolean) {
+    startTransition(async () => {
+      const res = await updateItemField(row.id, field, String(next), row.updatedAt);
+      setMsg(res.ok ? null : res.message);
+    });
+  }
+
+  return (
+    <div className="flex flex-col gap-1 text-sm">
+      <label className="flex items-center gap-1">
+        <input
+          type="checkbox"
+          checked={row.extruderFord}
+          disabled={pending}
+          onChange={(e) => toggle('extruderFord', e.target.checked)}
+        />
+        FORD
+      </label>
+      <label className="flex items-center gap-1">
+        <input
+          type="checkbox"
+          checked={row.extruderNew}
+          disabled={pending}
+          onChange={(e) => toggle('extruderNew', e.target.checked)}
+        />
+        NEW
+      </label>
+      {msg && <span className="text-xs text-red-600">{msg}</span>}
+    </div>
+  );
+}
+
+function BoolCell({ row, field, value }: { row: ItemRow; field: string; value: boolean }) {
+  const [msg, setMsg] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+  return (
+    <div className="flex flex-col gap-1">
+      <input
+        type="checkbox"
+        checked={value}
+        disabled={pending}
+        aria-label={field}
+        onChange={(e) =>
+          startTransition(async () => {
+            const res = await updateItemField(row.id, field, String(e.target.checked), row.updatedAt);
+            setMsg(res.ok ? null : res.message);
+          })
+        }
       />
       {msg && <span className="text-xs text-red-600">{msg}</span>}
     </div>
@@ -179,7 +240,12 @@ export function ItemsTable({ rows }: { rows: ItemRow[] }) {
         header: '헤드/핀',
         cell: ({ row }) => <EditableCell row={row.original} field="headPin" value={row.original.headPin} />,
       },
-      { accessorKey: 'extrusionGroup', header: 'E그룹', enableSorting: true },
+      {
+        accessorKey: 'extrusionGroup',
+        header: 'E그룹',
+        enableSorting: true,
+        cell: ({ row }) => <EditableCell row={row.original} field="extrusionGroup" value={row.original.extrusionGroup} />,
+      },
       {
         accessorKey: 'cutLength',
         header: '재단길이',
@@ -188,8 +254,22 @@ export function ItemsTable({ rows }: { rows: ItemRow[] }) {
       {
         id: 'extruder',
         header: '압출라인',
-        cell: ({ row }) =>
-          [row.original.extruderFord && 'FORD', row.original.extruderNew && 'NEW'].filter(Boolean).join(', ') || '-',
+        cell: ({ row }) => <ExtruderCell row={row.original} />,
+      },
+      {
+        accessorKey: 'lpMoldsPerAngle',
+        header: 'LP금형/앵글',
+        cell: ({ row }) => <EditableCell row={row.original} field="lpMoldsPerAngle" value={row.original.lpMoldsPerAngle} />,
+      },
+      {
+        accessorKey: 'icMoldsPerAngle',
+        header: 'IC금형/앵글',
+        cell: ({ row }) => <EditableCell row={row.original} field="icMoldsPerAngle" value={row.original.icMoldsPerAngle} />,
+      },
+      {
+        accessorKey: 'lpPosTop',
+        header: 'LP상단',
+        cell: ({ row }) => <BoolCell row={row.original} field="lpPosTop" value={row.original.lpPosTop} />,
       },
       {
         id: 'aliases',

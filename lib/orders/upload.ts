@@ -10,6 +10,7 @@ import { loadWorkbook, workbookMatrix, workbookSheetNames, type Workbook } from 
 import { parseWeeklyPlan } from '@/lib/etl/weekly-plan-parser';
 import { parseKdOrder, KD_SHEET_NAME } from '@/lib/etl/kd-order-parser';
 import { parseMonthlyForecast } from '@/lib/etl/monthly-forecast-parser';
+import { parseSalesForecast, monthFromFilename } from '@/lib/etl/sales-forecast-parser';
 import { applySiliconeFilter, unmatchedCodes } from '@/lib/orders/silicone-filter';
 import { applyPriorityRule } from '@/lib/orders/priority-rule';
 import { createUnmatchedNotification } from '@/lib/orders/notifications';
@@ -36,7 +37,7 @@ export interface MultiUploadResult {
 
 type SessionLike = { user?: { id?: string | null; role?: string | null } } | null;
 
-function parseByType(wb: Workbook, sourceType: SourceType): ParseResult {
+function parseByType(wb: Workbook, sourceType: SourceType, filename: string): ParseResult {
   const names = workbookSheetNames(wb);
   if (sourceType === 'weekly_plan') return parseWeeklyPlan(workbookMatrix(wb, names[0]));
   if (sourceType === 'kd') {
@@ -45,8 +46,18 @@ function parseByType(wb: Workbook, sourceType: SourceType): ParseResult {
     }
     return parseKdOrder(workbookMatrix(wb, KD_SHEET_NAME));
   }
-  const monthlySheet = names.find((s) => s.includes('통합')) ?? names[0];
-  return parseMonthlyForecast(workbookMatrix(wb, monthlySheet));
+  // monthly_forecast — 두 레이아웃 분기.
+  // '통합/수주정보' = M/D 날짜 헤더(r4) / '예상 매출 계획' = 주차 헤더(r8).
+  const lower = filename.toLowerCase();
+  if (lower.includes('통합') || lower.includes('수주정보')) {
+    const monthlySheet = names.find((s) => s.includes('통합')) ?? names[0];
+    return parseMonthlyForecast(workbookMatrix(wb, monthlySheet));
+  }
+  const month = monthFromFilename(filename);
+  if (month === null) {
+    return { rows: [], errors: ['예상 매출 계획 파일명에 월(예: 06월) 정보가 없습니다.'] };
+  }
+  return parseSalesForecast(workbookMatrix(wb, names[0]), month);
 }
 
 /**
@@ -70,7 +81,7 @@ async function processOneFile(file: File, session: SessionLike): Promise<UploadR
     return { ok: false, message: '엑셀 파일을 읽을 수 없습니다(손상되었을 수 있습니다).', sourceType };
   }
 
-  const parsed = parseByType(wb, sourceType);
+  const parsed = parseByType(wb, sourceType, file.name);
   if (parsed.rows.length === 0) {
     return { ok: false, message: '적재할 행이 없습니다.', sourceType, errors: parsed.errors };
   }

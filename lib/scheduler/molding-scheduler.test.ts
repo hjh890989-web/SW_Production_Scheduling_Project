@@ -45,6 +45,31 @@ function run(over: Partial<SchedulerInput>): ReturnType<typeof generateMoldingSc
 }
 
 describe('generateMoldingSchedule — 핵심 보장 (T5.2)', () => {
+  it('캐파 채움: 수요 부족 시 fillOrders(선행생산)를 빈 셀에 전진 채움', () => {
+    const items = { P1: item('P1', { moldsPerAngle: 10 }) };
+    // 실수요 없음 + 미래 채움수요 1건(대량) → 빈 셀이 채워진다.
+    const r = run({
+      orders: [],
+      items,
+      fillOrders: [{ itemId: 'P1', deliveryDate: '2026-07-01', quantity: 50, orderId: 'F1' }],
+      fillWorkdays: ['2026-05-11'], // 표시 주차 한정
+    });
+    expect(r.schedules.length).toBeGreaterThan(0);
+    // 채움은 지정 영업일·전진 방향(가장 이른 날)만 사용
+    expect(r.schedules.every((s) => s.date === '2026-05-11')).toBe(true);
+    expect(r.warnings).toHaveLength(0); // 채움 부족분은 경고 없음
+  });
+
+  it('캐파 채움: 슬롯 적격성 준수(IC 채움수요는 LP 슬롯에 안 들어감)', () => {
+    const icItem = item('IC1', { equipmentType: 'MOLDING_IC', allowedSlots: IC_SLOTS, moldsPerAngle: 5 });
+    const r = run({
+      orders: [],
+      items: { IC1: icItem },
+      fillOrders: [{ itemId: 'IC1', deliveryDate: '2026-07-01', quantity: 20, orderId: 'F2' }],
+    });
+    expect(r.schedules.every((s) => IC_SLOTS.includes(s.slot) && s.equipmentCode === 'IC_1')).toBe(true);
+  });
+
   it('AC T5.2-1: 슬롯 X(allowedSlots 밖)에 배치 0건', () => {
     const it1 = item('P1', { allowedSlots: ['LP_TOP_1'] }); // 단 1슬롯만 O
     const r = run({ orders: [{ itemId: 'P1', deliveryDate: '2026-05-22', quantity: 80 }], items: { P1: it1 } });
